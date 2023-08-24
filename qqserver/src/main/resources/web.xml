@@ -1,0 +1,18 @@
+<web-app>
+    <servlet>
+        <servlet-name>user</servlet-name>
+        <servlet-class>org.skyme.controller.UserController</servlet-class>
+        <servlet-name>chat</servlet-name>
+        <servlet-class>org.skyme.controller.ChatController</servlet-class>
+        <servlet-name>group</servlet-name>
+        <servlet-class>org.skyme.controller.GroupController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>user</servlet-name>
+        <url-pattern>/user</url-pattern>
+        <servlet-name>chat</servlet-name>
+        <url-pattern>/chat</url-pattern>
+        <servlet-name>group</servlet-name>
+        <url-pattern>/group</url-pattern>
+    </servlet-mapping>
+</web-app>
