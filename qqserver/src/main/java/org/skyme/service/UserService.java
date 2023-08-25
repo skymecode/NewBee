@@ -24,4 +24,6 @@ public interface UserService {
     BaseResponse acceptFriend(Request request, Response response) throws IOException;
 
     BaseResponse refuseFriend(Request request, Response response);
+
+    BaseResponse queryInfo(Request request, Response response);
 }

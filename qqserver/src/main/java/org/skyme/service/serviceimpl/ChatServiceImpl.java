@@ -59,11 +59,17 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public BaseResponse friendHistory(Request request, Response response) {
+
         Message message = request.getMessage();
+
         QQMessage data = (QQMessage) message.getDate();
+
         Long sendUid = data.getSendUid();
+
         Long fromUid = data.getFromUid();
-        List<QQMessage> select = SqlUtil.select(QQMessage.class, "SELECT * FROM `qq_message` WHERE (send_uid=? and from_uid=?) or (send_uid=? AND from_uid=?) ", sendUid, fromUid, fromUid, sendUid);
+
+        List<QQMessage> select = SqlUtil.select(QQMessage.class, "SELECT * from (SELECT * FROM `qq_message` WHERE (send_uid=? and from_uid=?) or (send_uid=? AND from_uid=?) ORDER BY send_time DESC LIMIT 10) AS  s  ORDER BY s.mid asc", sendUid, fromUid, fromUid, sendUid);
+
         for (QQMessage qqMessage : select) {
             if(!fromUid.equals(qqMessage.getFromUid())){
             qqMessage.setStatus(1);
@@ -73,12 +79,12 @@ public class ChatServiceImpl implements ChatService {
         List<User> selects = SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 1;", fromUid);
         //根据每个好友再去查询我未读的消息
         List<FriendList> lists = new ArrayList<>();
+
         for (User user : selects) {
             //拿到好友的ID
             Long friendUid = user.getUid();
             System.out.println("当前好友ID"+friendUid);
             //根据我的ID和好友的ID去查询未读消息的数量
-
             List<Map<String, Object>> select1 = SqlUtil.select("select count(*) from qq_message WHERE from_uid=? AND send_uid=? AND `status`=0 ", friendUid,fromUid);
             Long nums = 0L;
             for (Map<String, Object> stringObjectMap : select1) {

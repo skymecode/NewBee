@@ -15,9 +15,6 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
-import static javax.swing.JOptionPane.DEFAULT_OPTION;
-import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
-
 
 public class Login extends JFrame {
 
@@ -38,9 +35,16 @@ public class Login extends JFrame {
 	public void setSocket(SocketChannel socket) {
 		this.socket = socket;
 	}
+	public ClientThread clientThread;
 
+	public ClientThread getClientThread() {
+		return clientThread;
+	}
 
-	/**
+	public void setClientThread(ClientThread clientThread) {
+		this.clientThread = clientThread;
+	}
+/**
 	 * Launch the application.
 	 */
 
@@ -49,13 +53,15 @@ public class Login extends JFrame {
 	 * Create the frame.
 	 */
 	public Login() {
+
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-		
+		this.setLocationRelativeTo(null);
+		setTitle("Skyme-登录");
 		JLabel lblNewLabel = new JLabel("用户名:");
 		lblNewLabel.setBounds(44, 69, 58, 15);
 		contentPane.add(lblNewLabel);
@@ -98,27 +104,18 @@ public class Login extends JFrame {
 				message.setMes("请求登录");
 				message.setCode(1);
 				message.setDate(user);
-
 				try {
-					NIOObjectUtil.writeObjectToChannel(message,socket);
+					NIOObjectUtil.writeObjectToChannel(message, Login.this.socket);
+					clientThread.setLogin(Login.this);
+//					Message o = (Message) NIOObjectUtil.readObjectFromChannel(socket);
 
-					Message o = (Message) NIOObjectUtil.readObjectFromChannel(socket);
-					if(o .getType()==MessageType.LOG_RESULT){
-						if(o .getCode()==1){
-							JOptionPane.showConfirmDialog(contentPane,o .getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
-							System.out.println("执行登录");
-							openFriendListWindow((User) o.getDate());
-							//启动线程监听好友列表
-						}else{
-							JOptionPane.showConfirmDialog(contentPane,o.getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
-						}
-					}
 //					ObjectUtil.sendObject(socket,message);
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
-				} catch (ClassNotFoundException ex) {
-					throw new RuntimeException(ex);
 				}
+//				 catch (ClassNotFoundException ex) {
+//					throw new RuntimeException(ex);
+//				}
 			}
 		});
 		btnNewButton_1.setBounds(251, 202, 97, 23);
@@ -127,18 +124,17 @@ public class Login extends JFrame {
 
 	}
 	public void openFriendListWindow(User loggedInUser) {
-
-
 		SwingUtilities.invokeLater(() -> {
-		  	ClientThread clientThread = new ClientThread();
-			clientThread.setSocket(socket);
-			clientThread.setLogin(this);
+			System.out.println("执行");
 			friendListWindow = new Surface(loggedInUser,socket,clientThread);
 			System.out.println("执行");
 			clientThread.setSurface(friendListWindow);
+
 			friendListWindow.setVisible(true);
-			clientThread.start();
+			friendListWindow.setUser(loggedInUser);
 			setVisible(false); // 隐藏登录窗口
 		});
+
+
 	}
 }

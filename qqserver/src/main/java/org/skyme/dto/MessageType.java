@@ -1,6 +1,8 @@
 package org.skyme.dto;
 
-public enum MessageType {
+import java.io.Serializable;
+
+public enum MessageType implements Serializable {
     REG("/user/register"),
     REG_RESULT("1"),
 
@@ -67,7 +69,11 @@ public enum MessageType {
     //同意进群
     //被允许进群通知
 
+    INFO("/user/info"),
+    INFO_RESULT("info"),
+
     NORMAL_RESULT(""), QUIT_GROUP("/group/quitGroup"),QUIT_GROUP_RESULT("quit_group_result");
+
 
     private String path;
 

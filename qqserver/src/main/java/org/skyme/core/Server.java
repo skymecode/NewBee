@@ -30,11 +30,9 @@ public class Server {
     private ServerSocket serverSocket; //Socket
     private ExecutorService executorService;//线程池
     private Map<Long, SocketChannel> onlineUsers;//在线表
-
     private final HashMap<String,String> servletMap=new HashMap<>();
-
     private final HashMap<String,String> servletToContollerMap = new HashMap<>();
-
+    private HashMap<String,Object> controllers=new HashMap<>();
     public Map<Long, SocketChannel> getOnlineUsers() {
         return onlineUsers;
     }
@@ -62,19 +60,19 @@ public class Server {
         server.configureBlocking(false);
         Selector selector = Selector.open();
         server.register(selector, SelectionKey.OP_ACCEPT);
+        Set<SelectionKey> selectedKeys=null;
         while(true){
             int select = selector.select();
             if(select==0){
                 continue;
             }
-            Set<SelectionKey> selectedKeys = selector.selectedKeys();
+            selectedKeys= selector.selectedKeys();
             for (SelectionKey key : selectedKeys) {
                 if(key.isAcceptable()){
                     ServerSocketChannel channel = (ServerSocketChannel) key.channel();
                     SocketChannel accept = channel.accept();
                     accept.configureBlocking(false);
                     accept.register(selector,SelectionKey.OP_READ);
-//                    executorService.execute(new ServerTask(this,accept, servletMap, servletToContollerMap));
                 }else if(key.isReadable()){
                     SocketChannel client = (SocketChannel)key.channel();
                     if(client.isOpen()){
@@ -84,8 +82,9 @@ public class Server {
                         client.close();
                     }
                     }
+
                 }
-                selectedKeys.clear();
+            selectedKeys.clear();
             }
 
 

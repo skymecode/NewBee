@@ -52,5 +52,8 @@ private UserService userService=new UserServiceImpl();
     public BaseResponse refuse(Request request,Response response){
         return userService.refuseFriend(request, response);
     }
+    public BaseResponse info(Request request,Response response){
+        return userService.queryInfo(request, response);
+    }
 
 }

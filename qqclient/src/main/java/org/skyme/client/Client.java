@@ -28,7 +28,14 @@ public class Client {
         String ip = properties.getProperty("ip");
         int port = Integer.parseInt(property);
         SocketChannel open = SocketChannel.open();
-        boolean connect = open.connect(new InetSocketAddress(ip, port));
+        boolean connect = false;
+        try {
+           connect= open.connect(new InetSocketAddress(ip, port));
+        }catch (Exception e){
+            System.out.println("连接服务器失败");
+            return;
+        }
+        
         if(!connect){
             while (open.finishConnect()){
                 open.connect(new InetSocketAddress(ip, port));

@@ -43,6 +43,9 @@ public class ServerTask implements Runnable{
                 if(socket.isOpen()){
                 Object o = NIOObjectUtil.readObjectFromChannel(socket);
                 Message mes= (Message) o;
+                if(o==null){
+                    return;
+                }
                 MessageType type = mes.getType();
                 String path = type.getPath();
                 String path1 = path.substring(0,path.indexOf("/",1));
@@ -63,13 +66,10 @@ public class ServerTask implements Runnable{
                 if(message.getType()==MessageType.LOGOUT_RESULT){
                     socket.close();
                 }
-            } else{
-                socket.close();
-                }
+            }
             } catch (IOException | ClassNotFoundException | InvocationTargetException | InstantiationException |
                      NoSuchMethodException | IllegalAccessException e) {
-             throw new RuntimeException(e);
-            }
+             throw new RuntimeException(e);}
 //       try {
 //           socket.close();
 //       } catch (IOException e) {

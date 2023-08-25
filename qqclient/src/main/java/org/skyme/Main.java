@@ -6,6 +6,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.skyme.client.Client;
+import org.skyme.client.ClientThread;
 import org.skyme.ui.Login;
 import org.skyme.ui.Register;
 
@@ -25,20 +26,20 @@ public class Main {
 	private JPanel contentPane;
 	private JPasswordField passwordField;
 	private static Register register;
-	private static Login login;
-
+	private static  Login login;
 	private static SocketChannel socket;
-
 	public static void main(String[] args) {
-//		try {
-//			UIManager.setLookAndFeel( new FlatMacLightLaf());
-//		} catch( Exception ex ) {
-//			System.err.println( "Failed to initialize LaF" );
-//		}
 
 		EventQueue.invokeLater(new Runnable() {
+
+
 			@Override
 			public void run() {
+				try {
+					UIManager.setLookAndFeel(new FlatMacLightLaf());
+				} catch (UnsupportedLookAndFeelException e) {
+					throw new RuntimeException(e);
+				}
 				Client client = new Client();
 				try {
 					client.init();
@@ -55,21 +56,32 @@ public class Main {
 				login1.setSocket(socket);
 				Register register1 = getRegister();
 				register1.setSocket(socket);
-
+				ClientThread clientThread = new ClientThread();
+				clientThread.setSocket(socket);
+				login.setClientThread(clientThread);
+				clientThread.start();
 			}
 		});
 	}
+
 	public static Login getLogin() {
-		if(login==null) {
-			login =new Login();
+		if(login==null){
+			login=	new Login();
+			return login;
+		}else{
+			return login;
 		}
-		return login;
+
+
 	}
 	public static Register getRegister() {
 		if(register==null) {
-			register=new Register();
+			register=new Register(getLogin());
+			return register;
+		}else{
+
+			return register;
 		}
-		return register;
 	}
 
 	/**

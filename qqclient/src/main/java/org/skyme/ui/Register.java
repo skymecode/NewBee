@@ -25,8 +25,19 @@ public class Register extends JFrame {
 
 	private SocketChannel socket;
 
+	private Login login;
+
+	public Login getLogin() {
+		return login;
+	}
+
+	public void setLogin(Login login) {
+		this.login = login;
+	}
+
 	/**
 	 * Launch the application.
+	 *
 	 */
 
 
@@ -42,12 +53,13 @@ public class Register extends JFrame {
 	 * Create the frame.
 	 */
 
-	public Register() {
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	public Register(Login login) {
+		this.login=login;
 		setBounds(100, 100, 450, 468);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-
+		this.setLocationRelativeTo(null);
+		setTitle("Skyme-注册");
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
@@ -88,6 +100,17 @@ public class Register extends JFrame {
 		contentPane.add(btnNewButton);
 		
 		JButton btnNewButton_1 = new JButton("返回登录");
+		btnNewButton_1.setBounds(171, 382, 97, 23);
+		contentPane.add(btnNewButton_1);
+
+		btnNewButton_1.addMouseListener(new MouseAdapter() {
+											@Override
+											public void mouseClicked(MouseEvent e) {
+												Register.this.setVisible(false);
+												getLogin().setVisible(true);
+											}
+										}
+		);
 		btnNewButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -95,44 +118,42 @@ public class Register extends JFrame {
 				Main.getRegister().setVisible(false);
 				Main.getLogin().setVisible(true);
 				String username = formattedTextField.getText();
-				String nickname = formattedTextField_1.getText();
-				String password = passwordField.getText();
-				String email = formattedTextField_3.getText();
-				MessageType reg = MessageType.REG;//设置消息路径
-				User user = new User();
-				user.setUsername(username);
-				user.setNickname(nickname);
-				user.setPassword(password);
-				user.setEmail(email);
-				Message<User> userMessage = new Message<User>();//生成消息
-				userMessage.setDate(user);
-				userMessage.setMes("请求注册");
-				userMessage.setCode(1);
-				userMessage.setType(reg);
-				try {
-					NIOObjectUtil.writeObjectToChannel(userMessage,socket);
-//					ObjectUtil.sendObject(socket,userMessage);
-				} catch (IOException ex) {
-					throw new RuntimeException(ex);
+				if(!username.matches("^[a-zA-Z0-9_]{3,20}$")){
+					JOptionPane.showConfirmDialog(null,"用户名不合法","警告",DEFAULT_OPTION,INFORMATION_MESSAGE);
+
+				}else{
+					String nickname = formattedTextField_1.getText();
+					String password = passwordField.getText();
+					if(!password.matches("^(?=.*[0-9])(?=.*[a-zA-Z])[a-zA-Z0-9]{6,18}$")){
+						JOptionPane.showConfirmDialog(null,"密码不合法","警告",DEFAULT_OPTION,INFORMATION_MESSAGE);
+
+					}else{
+						String email = formattedTextField_3.getText();
+						MessageType reg = MessageType.REG;//设置消息路径
+						User user = new User();
+						user.setUsername(username);
+						user.setNickname(nickname);
+						user.setPassword(password);
+						user.setEmail(email);
+						Message<User> userMessage = new Message<User>();//生成消息
+						userMessage.setDate(user);
+						userMessage.setMes("请求注册");
+						userMessage.setCode(1);
+						userMessage.setType(reg);
+						try {
+							NIOObjectUtil.writeObjectToChannel(userMessage,socket);
+						} catch (IOException ex) {
+							throw new RuntimeException(ex);
+						}
+					}
 				}
-				//通过socket将message类发送到
-//				try {
-//					Message message = (Message) ObjectUtil.getObject(socket);
-//					if(message.getType()==MessageType.REG_RESULT){
-//						if(message.getCode()==1){
-//							JOptionPane.showConfirmDialog(contentPane,message.getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
-//						}else{
-//							JOptionPane.showConfirmDialog(contentPane,message.getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
-//						}
-//					}
-//				} catch (IOException | ClassNotFoundException ex) {
-//					throw new RuntimeException(ex);
-//				}
+
+
+
 
 			}
 		});
-		btnNewButton_1.setBounds(171, 382, 97, 23);
-		contentPane.add(btnNewButton_1);
+
 	}
 
 }

@@ -92,14 +92,16 @@ public class UserServiceImpl implements UserService {
                 baseResponse.setMessage(mes);
                 return baseResponse;
             }
+        }else{
+            mes.setCode(-1);//失败
+            mes.setDate("null");
+            mes.setType(MessageType.LOG_RESULT);
+            mes.setMes("账号或密码错误!");
+            baseResponse.setMessage(mes);
+            return baseResponse;
         }
-        mes.setCode(-1);//失败
-        mes.setDate("null");
-        mes.setType(MessageType.LOG_RESULT);
-        mes.setMes("账号或密码错误!");
-        baseResponse.setMessage(mes);
-        return baseResponse;
-    }
+        }
+
 
     @Override
     public BaseResponse queryFriends(Request request, Response response) {
@@ -216,9 +218,28 @@ public class UserServiceImpl implements UserService {
             mes.setDate(add.getFromUser());
             response.sendAddMessage(add.getSendUser().getUid(), mes);
         }else{
+            System.out.println("不在线加好友");
             //这里暂时只能在线加好友,后面会实现消息中心功能
-        }
+            //不在线则把这二者的关系改成2,待加好友
+            QQRelation qqRelation = new QQRelation();
+            qqRelation.setStatus(2);
+            qqRelation.setFid(add.getSendUser().getUid());
+            qqRelation.setUid(add.getFromUser().getUid());
+            List<QQRelation> list= SqlUtil.select(QQRelation.class, "select * from qq_relation where (uid=? and fid=?) or (fid=? and uid=?)", add.getFromUser().getUid(), add.getSendUser().getUid(), add.getFromUser().getUid(), add.getSendUser().getUid());
+            if(list.isEmpty()){
+                int insert = SqlUtil.insert(qqRelation);
+                qqRelation.setFid(add.getFromUser().getUid());
+                qqRelation.setUid(add.getSendUser().getUid());
+                qqRelation.setStatus(2);
+                SqlUtil.insert(qqRelation);
+            }else{
+                for (QQRelation relation : list) {
+                    relation.setStatus(2);
+                    SqlUtil.update(relation);
+                }
 
+            }
+        }
         Message message1 = new Message();
         message1.setType(MessageType.NORMAL_RESULT);
         return new BaseResponse(message1);
@@ -258,18 +279,6 @@ public class UserServiceImpl implements UserService {
             message1.setType(MessageType.SUCCESS_ADD_FRIEND_RESULT);
             response.sendAcceptedMessage(addFriend.getSendUser().getUid(),message1);
             System.out.println("发送刷新列表响应");
-//            User sendUser = addFriend.getSendUser();
-//            User fromUser = addFriend.getFromUser();
-//            User user = new User();
-//            user.setNickname(sendUser.getNickname());
-//            user.setOnline(sendUser.getOnline());
-//            user.setUsername(sendUser.getUsername());
-//            user.setUid(sendUser.getUid());
-//            user.setEmail(sendUser.getEmail());
-//            addFriend.setSendUser(fromUser);
-//            addFriend.setFromUser(user);
-//            message1.setDate(addFriend);
-//            response.sendAcceptedMessage(addFriend.getSendUser().getUid(),message1);
         }
         Message message1 = new Message();
         message1.setType(MessageType.NORMAL_RESULT);
@@ -280,6 +289,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public BaseResponse refuseFriend(Request request, Response response) {
         return null;
+    }
+
+    @Override
+    public BaseResponse queryInfo(Request request, Response response) {
+        Message<User> message = request.getMessage();
+        User user = message.getDate();
+        Long uid = user.getUid();
+        //查询关系表中状态为2的
+        List<User> list= SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 2", uid);
+        Message<List<User>> listMessage = new Message<>();
+        listMessage.setType(MessageType.INFO_RESULT);
+        listMessage.setCode(1);
+        listMessage.setDate(list);
+        listMessage.setMes("获取信息成功");
+        return new BaseResponse(listMessage);
     }
 
 }

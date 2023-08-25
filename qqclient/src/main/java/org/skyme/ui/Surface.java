@@ -65,6 +65,8 @@ public class Surface extends JFrame {
 	private boolean showFriends = true; // 默认显示好友
 	List<User> matchingUsers;
 
+	private InfoWindowApp infoWindowApp;
+
 	private JList<FriendList> friendList;
 	private  JList<GroupList> groupList;
 	List<String> matchingUserNicknames ;
@@ -110,14 +112,7 @@ public class Surface extends JFrame {
 	public void setGroupList(JList<GroupList> groupList) {
 		this.groupList = groupList;
 	}
-	//	@Override
-//	public JPanel getContentPane() {
-//		return contentPane;
-//	}
-//
-//	public void setContentPane(JPanel contentPane) {
-//		this.contentPane = contentPane;
-//	}
+
 
 	public User getUser() {
 		return user;
@@ -127,8 +122,18 @@ public class Surface extends JFrame {
 		this.user = user;
 	}
 
+	public InfoWindowApp getInfoWindowApp() {
+		return infoWindowApp;
+	}
+
+	public void setInfoWindowApp(InfoWindowApp infoWindowApp) {
+		this.infoWindowApp = infoWindowApp;
+	}
+
 	/**
 	 * Launch the application.
+	 *
+
 	 */
 
 
@@ -187,10 +192,13 @@ public class Surface extends JFrame {
 	 *
 	 */
 	public Surface(User loggedInUser,SocketChannel socket,ClientThread clientThread) {
+
 		this.socket=socket;
 		this.user=loggedInUser;
 		this.clientThread=clientThread;
 		JLabel avatarLabel = new JLabel();
+		this.setLocationRelativeTo(null);
+		setTitle("Skyme-注册");
 		avatarLabel.setBounds(10, 32, ICON_SIZE, ICON_SIZE);
 		ImageIcon defaultAvatarIcon = new ImageIcon("F:\\ikun.png"); // 替换为实际路径
 		Image scaledAvatarImage = defaultAvatarIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
@@ -230,28 +238,36 @@ public class Surface extends JFrame {
 		JButton btnNewButton = new JButton("添加好友");
 		btnNewButton.setBounds(10, 80, 100, 24);
 		contentPane.add(btnNewButton);
-		//
 		friendRadioButton.setSelected(true); // 默认选中好友
-
 		friendRadioButton.addActionListener(e -> {
 			showFriends = true;
 			scrollPane2.setVisible(false);
 			scrollPane.setVisible(true);
 			updateListModel();
 		});
-
 		groupChatRadioButton.addActionListener(e -> {
 			showFriends = false;
 			scrollPane.setVisible(false);
 			scrollPane2.setVisible(true);
 			updateListModel();
 		});
-
 		friendRadioButton.setBounds(120, 80, 80, 25);
 		groupChatRadioButton.setBounds(200, 80, 80, 25);
 		JButton addGroupButton = new JButton("添加/创建群聊");
 		addGroupButton.setBounds(10, 110, 100, 25);
 		contentPane.add(addGroupButton);
+		JButton infoButton = new JButton("消息通知");
+		infoButton.setBounds(120, 120, 150, 25);
+		contentPane.add(infoButton);
+		infoButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// 在按钮点击事件中显示 InfoWindowApp 窗口
+				InfoWindowApp infoWindowApp = new InfoWindowApp(socket,user, Surface.this);
+				clientThread.setInfoWindowApp(infoWindowApp);
+				infoWindowApp.setVisible(true);
+			}
+		});
 
 		// 添加按钮点击事件监听器
 		addGroupButton.addActionListener(new ActionListener() {
@@ -347,9 +363,15 @@ public class Surface extends JFrame {
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
+//				try {
+//					socket.socket().getOutputStream().flush();
+//				} catch (IOException ex) {
+//					throw new RuntimeException(ex);
+//				}
+
 				try {
-					socket.socket().getOutputStream().flush();
-				} catch (IOException ex) {
+					Thread.sleep(1000);
+				} catch (InterruptedException ex) {
 					throw new RuntimeException(ex);
 				}
 				//查询好友列表
@@ -359,6 +381,7 @@ public class Surface extends JFrame {
 				m.setMes("请求查询好友列表");
 				m.setType(MessageType.FRIENDS_LIST);
 				try {
+					System.out.println("请求查询好友列表");
 					NIOObjectUtil.writeObjectToChannel(m,socket);
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
