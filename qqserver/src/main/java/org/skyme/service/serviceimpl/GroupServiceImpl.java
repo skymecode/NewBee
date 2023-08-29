@@ -143,32 +143,37 @@ public class GroupServiceImpl implements GroupService {
 
         }else{
             //数据库搜索名称匹配的群
-            QQGroup qqGroup = SqlUtil.selectOne(QQGroup.class, "select * from qq_group where g_name=?", addGroup.getGroupName());
-            //如果有直接进群
-            if(qqGroup != null){
-                //判断是否已经进过这个群了
-                QQGroupRelation qqGroupRelation1 = SqlUtil.selectOne(QQGroupRelation.class, "select * from qq_group where g_gid=? and g_uid=?", qqGroup.getGid(), addGroup.getUid());
-                if(qqGroupRelation1!=null){
-                    qqGroupRelation1.setStatus(1);
-                    SqlUtil.update(qqGroupRelation1);
-                }else{
-                    //进群
-                    QQGroupRelation qqGroupRelation = new QQGroupRelation();
-                    qqGroupRelation.setGGid(qqGroup.getGid());
-                    qqGroupRelation.setStatus(1);
-                    qqGroupRelation.setGUid(addGroup.getUid());
-
-                    int insert = SqlUtil.insert(qqGroupRelation);
+            try {
+                QQGroup qqGroup = SqlUtil.selectOne(QQGroup.class, "select * from qq_group where g_name=?", addGroup.getGroupName());
+                //如果有直接进群
+                if(qqGroup != null){
+                    //判断是否已经进过这个群了
+                    try {
+                        QQGroupRelation qqGroupRelation1 = SqlUtil.selectOne(QQGroupRelation.class, "select * from qq_group_relation where g_gid=? and g_uid=?", qqGroup.getGid(), addGroup.getUid());
+                        if(qqGroupRelation1!=null){
+                            qqGroupRelation1.setStatus(1);
+                            SqlUtil.update(qqGroupRelation1);
+                        }
+                    }catch (IndexOutOfBoundsException e){
+                        //进群
+                        QQGroupRelation qqGroupRelation = new QQGroupRelation();
+                        qqGroupRelation.setGGid(qqGroup.getGid());
+                        qqGroupRelation.setStatus(1);
+                        qqGroupRelation.setGUid(addGroup.getUid());
+                        int insert = SqlUtil.insert(qqGroupRelation);
+                    }
+                    message1.setCode(2);
+                    message1.setMes("加入成功");
                 }
-                message1.setCode(2);
-                message1.setMes("加入成功");
-
-            }else{
+            }catch (IndexOutOfBoundsException e){
+                System.out.println("没有找到这个群");
+                e.printStackTrace();
                 //没有返回未查找到
                 message1.setDate(null);
                 message1.setCode(0);
                 message1.setMes("未找到该群");
             }
+
         }
         return new BaseResponse(message1);
 

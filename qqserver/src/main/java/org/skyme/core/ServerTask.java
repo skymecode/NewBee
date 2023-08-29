@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
@@ -69,12 +70,21 @@ public class ServerTask implements Runnable{
             }
             } catch (IOException | ClassNotFoundException | InvocationTargetException | InstantiationException |
                      NoSuchMethodException | IllegalAccessException e) {
-             throw new RuntimeException(e);}
-//       try {
-//           socket.close();
-//       } catch (IOException e) {
-//           throw new RuntimeException(e);
-//       }
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+                if(e instanceof ClosedChannelException){
+                    try {
+                        socket.close();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+
+                }
+            }
+
 
 
 

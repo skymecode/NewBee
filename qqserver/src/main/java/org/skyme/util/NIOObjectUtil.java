@@ -28,6 +28,7 @@ public class NIOObjectUtil {
 //        int bytesRead = channel.read(buffer);
 //        if (bytesRead >0) {
         if(len==-1&&count==0){
+            channel.close();
             throw  new RuntimeException("接受的请求为空!");
         }else if (len==0&&count==0){
             System.out.println("len为0");

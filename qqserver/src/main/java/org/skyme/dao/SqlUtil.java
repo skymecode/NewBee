@@ -66,12 +66,15 @@ public class SqlUtil {
                 }
             }
             try {
+
                 resultSet = ps.executeQuery();
+
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
 
             List<T> objects = resloveResultSet(clazz, resultSet);
+
             close(resultSet,ps,connection);
             return  objects;
             //将查询结果返回

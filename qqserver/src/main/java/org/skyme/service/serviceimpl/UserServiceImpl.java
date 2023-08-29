@@ -10,10 +10,12 @@ import org.skyme.entity.User;
 import org.skyme.dao.SqlUtil;
 import org.skyme.jdbc.TimeUtil;
 import org.skyme.service.UserService;
+import org.skyme.util.MD5Util;
 import org.skyme.vo.BaseResponse;
 import org.skyme.vo.FriendList;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -27,25 +29,35 @@ public class UserServiceImpl implements UserService {
         Message message = request.getMessage();
         User date = (User) message.getDate();
         date.setCreateTime(TimeUtil.date2String(new Date()));
-        int insert = SqlUtil.insert(date);
-        BaseResponse baseResponse = new BaseResponse();
-        if(insert>0){
-            Message<String> mes = new Message<>();
-            mes.setCode(1);//成功
-            mes.setDate("null");
-            mes.setType(MessageType.REG_RESULT);
-            mes.setMes("注册成功");
-            baseResponse.setMessage(mes);
-            return baseResponse;
-        }else{
-            Message<String> mes = new Message<>();
-            mes.setCode(0);//失败
-            mes.setDate("null");
-            mes.setType(MessageType.REG_RESULT);
-            mes.setMes("注册失败");
-            baseResponse.setMessage(mes);
-            return baseResponse;
+        String password = date.getPassword();
+        try {
+            String md5Str = MD5Util.getMD5Str(password);
+            System.out.println("加密后的"+md5Str);
+            date.setPassword(md5Str);
+            int insert = SqlUtil.insert(date);
+            System.out.println("注册状态"+insert);
+            BaseResponse baseResponse = new BaseResponse();
+            if(insert>0){
+                Message<String> mes = new Message<>();
+                mes.setCode(1);//成功
+                mes.setDate("null");
+                mes.setType(MessageType.REG_RESULT);
+                mes.setMes("注册成功,现在可以登录了");
+                baseResponse.setMessage(mes);
+                return baseResponse;
+            }else{
+                Message<String> mes = new Message<>();
+                mes.setCode(0);//失败
+                mes.setDate("null");
+                mes.setType(MessageType.REG_RESULT);
+                mes.setMes("注册失败,当前账号可能已存在或你输入的格式有误");
+                baseResponse.setMessage(mes);
+                return baseResponse;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     @Override
@@ -60,7 +72,14 @@ public class UserServiceImpl implements UserService {
         Message mes = new Message<>();
         if(user.getUid()>0){
             //说明用户存在,对密码匹配
-            if(user.getPassword().equals(data.getPassword())){
+            String password = user.getPassword();
+            String md5Str=null;
+            try {
+                 md5Str = MD5Util.getMD5Str(password);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            if(md5Str.equals(data.getPassword())){
                 //密码正确
                 user.setLoginTime(TimeUtil.date2String(new Date()));
                 user.setOnline(1);

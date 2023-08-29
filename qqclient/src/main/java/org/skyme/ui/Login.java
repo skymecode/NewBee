@@ -12,6 +12,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 
@@ -86,6 +88,17 @@ public class Login extends JFrame {
 			public void mouseClicked(MouseEvent e) {
 				Main.getLogin().setVisible(false);
 				Main.getRegister().setVisible(true);
+			}
+		});
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				try {
+					socket.close();
+				} catch (IOException ex) {
+					throw new RuntimeException(ex);
+				}
+				setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 			}
 		});
 		//登录的按钮

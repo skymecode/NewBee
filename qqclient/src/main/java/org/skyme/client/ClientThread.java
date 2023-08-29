@@ -569,6 +569,7 @@ public class ClientThread extends Thread {
                                 //启动线程监听好友列表
                             }else{
                                 JOptionPane.showMessageDialog(null,message.getMes(),"消息提示",DEFAULT_OPTION);
+                                getLogin().setVisible(true);
                             }
 
                         }else if(type==MessageType.INFO_RESULT){
@@ -581,6 +582,12 @@ public class ClientThread extends Thread {
                             }
                             }
 
+                        }else if(type==MessageType.REG_RESULT){
+                            if(message.getCode()==1){
+                                JOptionPane.showMessageDialog(null,message.getMes(),"消息提示",DEFAULT_OPTION);
+                            }else {
+                                JOptionPane.showMessageDialog(null,message.getMes(),"消息提示",DEFAULT_OPTION);
+                            }
                         }
 
 
