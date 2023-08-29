@@ -1,8 +1,8 @@
 package org.skyme.ui;
 
+import org.skyme.core.Message;
 import org.skyme.dto.AddFriend;
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.MessageType;
 import org.skyme.entity.User;
 import org.skyme.util.NIOObjectUtil;
 
@@ -58,7 +58,7 @@ public class InfoWindowApp extends JFrame {
                         @Override
                         public void windowOpened(WindowEvent e) {
                                 Message<User> userMessage = new Message<>();
-                                userMessage.setDate(user);
+                                userMessage.setData(user);
                                 userMessage.setType(MessageType.INFO);
                                 try {
                                         NIOObjectUtil.writeObjectToChannel(userMessage,channel);
@@ -106,7 +106,7 @@ public class InfoWindowApp extends JFrame {
                         Message message= new Message<>();
                         message.setType(MessageType.ACCEPT_FRIEND);
                         message.setMes("接受了好友请求");
-                        message.setDate(addFriend);
+                        message.setData(addFriend);
                         try {
                                 NIOObjectUtil.writeObjectToChannel(message,channel);
                         } catch (IOException e) {
@@ -120,7 +120,7 @@ public class InfoWindowApp extends JFrame {
 
                         message= new Message<>();
                         message.setType(MessageType.FRIENDS_LIST);
-                        message.setDate(user);
+                        message.setData(user);
                         message.setCode(1);
                         message.setMes("请求刷新列表");
 

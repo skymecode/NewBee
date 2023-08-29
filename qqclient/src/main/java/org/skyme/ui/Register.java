@@ -1,8 +1,8 @@
 package org.skyme.ui;
 
 import org.skyme.Main;
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.Message;
+import org.skyme.core.MessageType;
 import org.skyme.entity.User;
 import org.skyme.util.NIOObjectUtil;
 
@@ -12,7 +12,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.channels.SocketChannel;
 
 import static javax.swing.JOptionPane.DEFAULT_OPTION;
@@ -136,7 +135,7 @@ public class Register extends JFrame {
 						user.setPassword(password);
 						user.setEmail(email);
 						Message<User> userMessage = new Message<User>();//生成消息
-						userMessage.setDate(user);
+						userMessage.setData(user);
 						userMessage.setMes("请求注册");
 						userMessage.setCode(1);
 						userMessage.setType(reg);

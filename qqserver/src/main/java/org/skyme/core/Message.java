@@ -1,4 +1,4 @@
-package org.skyme.dto;
+package org.skyme.core;
 
 import java.io.Serializable;
 
@@ -17,7 +17,7 @@ public class Message<T> implements Serializable {
     private String mes;//消息响应内容
 
 
-    private T date;//消息内容
+    private T data;//消息内容
 
     public MessageType getType() {
         return type;
@@ -43,11 +43,11 @@ public class Message<T> implements Serializable {
         this.mes = mes;
     }
 
-    public T getDate() {
-        return date;
+    public T getData() {
+        return data;
     }
 
-    public void setDate(T date) {
-        this.date = date;
+    public void setData(T data) {
+        this.data = data;
     }
 }

@@ -1,4 +1,4 @@
-package org.skyme.jdbc;
+package org.skyme.dao.jdbc;
 
 import java.util.List;
 

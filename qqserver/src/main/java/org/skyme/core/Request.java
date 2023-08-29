@@ -1,7 +1,5 @@
 package org.skyme.core;
 
-import org.skyme.dto.Message;
-
 /**
  * @author:Skyme
  * @create: 2023-08-17 16:13

@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 public class Server {
     private Properties properties ;
 
+    private ExecutorService fileExecutorService;
+
     private ServerSocket serverSocket; //Socket
     private ExecutorService executorService;//线程池
     private Map<Long, SocketChannel> onlineUsers;//在线表
@@ -42,6 +44,36 @@ public class Server {
     }
 
     public  void init() throws IOException {
+        fileExecutorService = Executors.newFixedThreadPool(25);
+        ServerSocket serverSocket = new ServerSocket(8888);
+        Thread thread = new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    while(true){
+                        Socket accept = serverSocket.accept();
+                        fileExecutorService.submit(new FileThread(accept));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        thread.start();
+        String path="F:\\project\\QQNIO\\qqserver\\src\\main\\resources\\server.properties";
+
+        InputStream inputStream =new FileInputStream(path);
+
+        try{
+            properties=new Properties();
+            properties.load(inputStream);
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String property = properties.getProperty("port");
+        int port = Integer.parseInt(property);
+
         onlineUsers=new ConcurrentHashMap<>();
         executorService= Executors.newFixedThreadPool(25);
         List<String> servletPaths = XmlUtil.getServletPaths();
@@ -56,7 +88,7 @@ public class Server {
             servletToContollerMap.put(names.get(i),servletClass.get(i));
         }
         ServerSocketChannel server = ServerSocketChannel.open();
-        server.bind(new InetSocketAddress(8089));
+        server.bind(new InetSocketAddress(port));
         server.configureBlocking(false);
         Selector selector = Selector.open();
         server.register(selector, SelectionKey.OP_ACCEPT);
@@ -96,8 +128,6 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
         new Server().init();
-
-
 
     }
 

@@ -1,14 +1,18 @@
 package org.skyme.service.serviceimpl;
 
+import org.skyme.core.Message;
 import org.skyme.core.Request;
 import org.skyme.core.Response;
+import org.skyme.dao.QQRelationDao;
+import org.skyme.dao.UserDao;
+import org.skyme.dao.daoimpl.QQRelationDaoImpl;
+import org.skyme.dao.daoimpl.UserDaoImpl;
 import org.skyme.dto.AddFriend;
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.MessageType;
 import org.skyme.entity.QQRelation;
 import org.skyme.entity.User;
-import org.skyme.dao.SqlUtil;
-import org.skyme.jdbc.TimeUtil;
+import org.skyme.dao.jdbc.SqlUtil;
+import org.skyme.dao.jdbc.TimeUtil;
 import org.skyme.service.UserService;
 import org.skyme.util.MD5Util;
 import org.skyme.vo.BaseResponse;
@@ -24,23 +28,27 @@ import java.util.*;
  * @Description:
  */
 public class UserServiceImpl implements UserService {
+    private UserDao userDao=new UserDaoImpl();
+    private QQRelationDao qqRelationDao = new QQRelationDaoImpl();
+
+
     @Override
-    public BaseResponse register(Request request,Response response) {
-        Message message = request.getMessage();
-        User date = (User) message.getDate();
-        date.setCreateTime(TimeUtil.date2String(new Date()));
-        String password = date.getPassword();
+    public BaseResponse register(User data,Response response) {
+
+        data.setCreateTime(TimeUtil.date2String(new Date()));
+        String password = data.getPassword();
         try {
             String md5Str = MD5Util.getMD5Str(password);
             System.out.println("加密后的"+md5Str);
-            date.setPassword(md5Str);
-            int insert = SqlUtil.insert(date);
+            data.setPassword(md5Str);
+            int insert = userDao.insert(data);
+//            int insert = SqlUtil.insert(date);
             System.out.println("注册状态"+insert);
             BaseResponse baseResponse = new BaseResponse();
             if(insert>0){
                 Message<String> mes = new Message<>();
                 mes.setCode(1);//成功
-                mes.setDate("null");
+                mes.setData("null");
                 mes.setType(MessageType.REG_RESULT);
                 mes.setMes("注册成功,现在可以登录了");
                 baseResponse.setMessage(mes);
@@ -48,7 +56,7 @@ public class UserServiceImpl implements UserService {
             }else{
                 Message<String> mes = new Message<>();
                 mes.setCode(0);//失败
-                mes.setDate("null");
+                mes.setData("null");
                 mes.setType(MessageType.REG_RESULT);
                 mes.setMes("注册失败,当前账号可能已存在或你输入的格式有误");
                 baseResponse.setMessage(mes);
@@ -61,43 +69,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public BaseResponse login(Request request, Response response) {
-
-        //获取请求的数据
-        Message message = request.getMessage();
-        User data = (User) message.getDate();
+    public BaseResponse login(User data, Response response) {
         //查询当前用户
-        User user = SqlUtil.selectOne(User.class, "select * from qq_user where username=?", data.getUsername());
+        User user = userDao.queryUserByUsername(data.getUsername());
         BaseResponse baseResponse = new BaseResponse();
         Message mes = new Message<>();
         if(user.getUid()>0){
             //说明用户存在,对密码匹配
-            String password = user.getPassword();
+            String password = data.getPassword();
             String md5Str=null;
             try {
                  md5Str = MD5Util.getMD5Str(password);
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
-            if(md5Str.equals(data.getPassword())){
+            System.out.println(md5Str);
+            System.out.println(user.getPassword());
+
+            if(md5Str.equals(user.getPassword())){
                 //密码正确
                 user.setLoginTime(TimeUtil.date2String(new Date()));
                 user.setOnline(1);
-                int up = SqlUtil.update(user);
+                int up= userDao.update(user);
+//                int up = SqlUtil.update(user);
                 System.out.println("用户登录数据更新");
                 if(up>0) {
                     mes.setCode(1);//失败
-                    mes.setDate(user);
+                    mes.setData(user);
                     mes.setType(MessageType.LOG_RESULT);
                     mes.setMes("登录成功");
                     baseResponse.setMessage(mes);
-                    List<User> friends= SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u RIGHT JOIN `qq_relation` r ON u.uid = r.uid where r.fid=?", user.getUid());
+                    List<User> friends = userDao.queryFriends(user.getUid());
                     response.online(user.getUid(),friends);
                     return baseResponse;
                 }
                 else{
                     mes.setCode(-1);//失败
-                    mes.setDate("null");
+                    mes.setData("null");
                     mes.setType(MessageType.LOG_RESULT);
                     mes.setMes("账号或密码错误!");
                     baseResponse.setMessage(mes);
@@ -105,7 +113,7 @@ public class UserServiceImpl implements UserService {
                 }
             }else{
                 mes.setCode(-1);//失败
-                mes.setDate("null");
+                mes.setData("null");
                 mes.setType(MessageType.LOG_RESULT);
                 mes.setMes("账号或密码错误!");
                 baseResponse.setMessage(mes);
@@ -113,7 +121,7 @@ public class UserServiceImpl implements UserService {
             }
         }else{
             mes.setCode(-1);//失败
-            mes.setDate("null");
+            mes.setData("null");
             mes.setType(MessageType.LOG_RESULT);
             mes.setMes("账号或密码错误!");
             baseResponse.setMessage(mes);
@@ -123,23 +131,22 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public BaseResponse queryFriends(Request request, Response response) {
-        System.out.println("有好友查询请求");
-        Message message = request.getMessage();
-        User data = (User) message.getDate();
+    public BaseResponse queryFriends(User data, Response response) {
+
         Long uid = data.getUid();
         //查询出好友
-        List<User> select = SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 1;", uid);
+        List<User> users = userDao.queryFriends(uid);
+//        List<User> select = SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 1;", uid);
         //根据每个好友再去查询我未读的消息
         List<FriendList> lists = new ArrayList<>();
-        for (User user : select) {
+        for (User user : users) {
             //拿到好友的ID
             Long friendUid = user.getUid();
             //根据我的ID和好友的ID去查询未读消息的数量
-
-            List<Map<String, Object>> select1 = SqlUtil.select("select count(*) from qq_message WHERE from_uid=? AND send_uid=? AND `status`=0 ", friendUid,uid );
+            List<Map<String, Object>> maps = userDao.queryCounts(friendUid, uid);
+//            List<Map<String, Object>> select1 = SqlUtil.select("select count(*) from qq_message WHERE from_uid=? AND send_uid=? AND `status`=0 ", friendUid,uid );
             Long nums= 0L;
-            for (Map<String, Object> stringObjectMap : select1) {
+            for (Map<String, Object> stringObjectMap : maps) {
                 Set<Map.Entry<String, Object>> entries = stringObjectMap.entrySet();
                 for (Map.Entry<String, Object> entry : entries) {
 
@@ -150,31 +157,31 @@ public class UserServiceImpl implements UserService {
                 }
             }
             FriendList friendList = new FriendList(user,nums);
-
-
             //封装一个类,存放User和未读消息数量Num
-
             //然后传给客户端一个集合
             lists.add(friendList);
-
         }
         Message mes = new Message<>();
         mes.setCode(1);
-        mes.setDate(lists);
+        mes.setData(lists);
         mes.setType(MessageType.FRIENDSLIST_RESULT);
         mes.setMes("查询成功!");
-//        System.out.println("查询成功"+select.get(0).getNickname());
         return new BaseResponse(mes);
     }
 
     @Override
-    public BaseResponse logout(Request request, Response response) {
-        Message message = request.getMessage();
-        Long uid = (Long) message.getDate();
-        User user = SqlUtil.selectOne(User.class, "select * from qq_user where uid=?", uid);
+    public BaseResponse logout(Long uid, Response response) {
+
+        User user = userDao.queryUserById(uid);
         user.setOnline(0);
-        int update = SqlUtil.update(user);
-        List<User> friends= SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u RIGHT JOIN `qq_relation` r ON u.uid = r.uid where r.fid=?", uid);
+        int update = userDao.update(user);
+//        int update = SqlUtil.update(user);
+        List<User> friends = userDao.queryFriends(uid);
+//        List<User> friends= SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u RIGHT JOIN `qq_relation` r ON u.uid = r.uid where r.fid=?", uid);
+        Message message = new Message();
+        message.setMes("退出");
+        message.setData(uid);
+        message.setCode(1);
         message.setType(MessageType.LOGOUT_RESULT);
         try {
             response.logout(uid,friends);
@@ -185,14 +192,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public BaseResponse deleteFriend(Request request, Response response) throws IOException {
-        Message message = request.getMessage();
-        QQRelation qqRelation = (QQRelation) message.getDate();
+    public BaseResponse deleteFriend(QQRelation qqRelation, Response response) throws IOException {
+
       //拿到二者的好友关注,状态都设置为0
         Long uid = qqRelation.getUid();
         Long fid = qqRelation.getFid();
-        User user = SqlUtil.selectOne(User.class, "select * from qq_user where uid=?", uid);
-        List<QQRelation> list = SqlUtil.select(QQRelation.class, "SELECT * FROM qq_relation WHERE (uid=? and fid=?) or (uid=? AND fid=?)", uid, fid, fid, uid);
+        User user = userDao.queryUserById(uid);
+//        User user = SqlUtil.selectOne(User.class, "select * from qq_user where uid=?", uid);
+        List<QQRelation> list = qqRelationDao.queryRelation(uid, fid, fid, uid);
         for (int i = 0; i < list.size(); i++) {
             QQRelation qqRelation1 = list.get(i);
             qqRelation1.setStatus(0);
@@ -205,61 +212,60 @@ public class UserServiceImpl implements UserService {
                 }
             }
         }
-
-
         Message message1 = new Message<>();
         message1.setCode(1);
-        message1.setDate(null);
+        message1.setData(null);
         message1.setType(MessageType.DELETE_FRIEND_RESULT);//删除好友的响应
         return new BaseResponse(message1);
     }
 
     @Override
-    public BaseResponse queryLikeUsers(Request request, Response response) {
-        Message message = request.getMessage();
-        String nickName = (String) message.getDate();
-        List<User> select = SqlUtil.select(User.class, "select * from qq_user where nickname like ?", nickName);
+    public BaseResponse queryLikeUsers(String nickName, Response response) {
+        List<User> select= userDao.queryLikeNickName(nickName);
         Message<List<User>> listMessage = new Message<>();
-        listMessage.setDate(select);
+        listMessage.setData(select);
         listMessage.setType(MessageType.QUERY_LIKE_USER_RESULT);
         return new BaseResponse(listMessage);
     }
 
     @Override
-    public BaseResponse addFriend(Request request, Response response) throws IOException {
-        Message message = request.getMessage();
-        AddFriend add = (AddFriend) message.getDate();
+    public BaseResponse addFriend(AddFriend add, Response response) throws IOException {
+
         if(response.isOnline(add.getSendUser().getUid())){
             //向这个人发送好友请求的通知
             Message mes = new Message<>();
             mes.setType(MessageType.ADDED_FRIEND);
             //向这个加的人发送好友添加请求
-            mes.setDate(add.getFromUser());
+            mes.setData(add.getFromUser());
             response.sendAddMessage(add.getSendUser().getUid(), mes);
         }else{
-            System.out.println("不在线加好友");
             //这里暂时只能在线加好友,后面会实现消息中心功能
             //不在线则把这二者的关系改成2,待加好友
             QQRelation qqRelation = new QQRelation();
             qqRelation.setStatus(2);
             qqRelation.setFid(add.getSendUser().getUid());
             qqRelation.setUid(add.getFromUser().getUid());
-            List<QQRelation> list= SqlUtil.select(QQRelation.class, "select * from qq_relation where (uid=? and fid=?) or (fid=? and uid=?)", add.getFromUser().getUid(), add.getSendUser().getUid(), add.getFromUser().getUid(), add.getSendUser().getUid());
+            List<QQRelation> list = qqRelationDao.queryRelation(add.getFromUser().getUid(), add.getSendUser().getUid(), add.getFromUser().getUid(), add.getSendUser().getUid());
+//            List<QQRelation> list= SqlUtil.select(QQRelation.class, "select * from qq_relation where (uid=? and fid=?) or (fid=? and uid=?)", );
             if(list.isEmpty()){
-                int insert = SqlUtil.insert(qqRelation);
+                int insert=  qqRelationDao.insert(qqRelation);
+//                 = SqlUtil.insert(qqRelation);
                 qqRelation.setFid(add.getFromUser().getUid());
                 qqRelation.setUid(add.getSendUser().getUid());
                 qqRelation.setStatus(2);
-                SqlUtil.insert(qqRelation);
+                int insert1 = qqRelationDao.insert(qqRelation);
+//                SqlUtil.insert(qqRelation);
             }else{
                 for (QQRelation relation : list) {
                     relation.setStatus(2);
-                    SqlUtil.update(relation);
+                    int i = qqRelationDao.update(relation);
                 }
-
             }
         }
+//        System.out.println("加好友");
         Message message1 = new Message();
+        message1.setCode(1);
+        message1.setData(null);
         message1.setType(MessageType.NORMAL_RESULT);
         return new BaseResponse(message1);
     }
@@ -268,7 +274,7 @@ public class UserServiceImpl implements UserService {
     public BaseResponse acceptFriend(Request request, Response response) throws IOException {
         //接受uid,通知uid，好友已经接受,然后让他刷新好友列表,自己也刷新
         Message message = request.getMessage();
-        AddFriend  addFriend= (AddFriend) message.getDate();
+        AddFriend  addFriend= (AddFriend) message.getData();
         Long uid = addFriend.getFromUser().getUid();
         Long fid = addFriend.getSendUser().getUid();
         //向数据库中加入关系
@@ -294,7 +300,7 @@ public class UserServiceImpl implements UserService {
 
         if(response.isOnline(addFriend.getSendUser().getUid())){
             Message message1 = new Message();
-            message1.setDate(addFriend);
+            message1.setData(addFriend);
             message1.setType(MessageType.SUCCESS_ADD_FRIEND_RESULT);
             response.sendAcceptedMessage(addFriend.getSendUser().getUid(),message1);
             System.out.println("发送刷新列表响应");
@@ -311,18 +317,34 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public BaseResponse queryInfo(Request request, Response response) {
-        Message<User> message = request.getMessage();
-        User user = message.getDate();
+    public BaseResponse queryInfo(User user, Response response) {
         Long uid = user.getUid();
         //查询关系表中状态为2的
         List<User> list= SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 2", uid);
         Message<List<User>> listMessage = new Message<>();
         listMessage.setType(MessageType.INFO_RESULT);
         listMessage.setCode(1);
-        listMessage.setDate(list);
+        listMessage.setData(list);
         listMessage.setMes("获取信息成功");
         return new BaseResponse(listMessage);
+    }
+
+    @Override
+    public BaseResponse modNickname(User user, Response response) {
+        int update = userDao.update(user);
+        System.out.println("修改昵称"+update);
+//        List<User> users = userDao.queryFriends(user.getUid());
+//        for (User user1 : users) {
+//            if(response.isOnline(user1.getUid())){
+//                List<User> usersF = userDao.queryFriends(user1.getUid());
+//
+//               response.flushList(user1.getUid(),usersF);
+//            }
+//        }
+        Message<Object> objectMessage = new Message<>();
+        objectMessage.setType(MessageType.MOD_NICKNAME_RESULT);
+        objectMessage.setCode(1);
+        return new BaseResponse();
     }
 
 }

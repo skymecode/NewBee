@@ -1,6 +1,6 @@
 package org.skyme.util;
 
-import org.skyme.dto.Message;
+import org.skyme.core.Message;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -40,6 +40,7 @@ public class NIOObjectUtil {
             try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytesOut.toByteArray()))) {
                 Object receivedObj = objectInputStream.readObject();
                 if (receivedObj instanceof Message) {
+                    System.out.println("等于");
                     Message obj = (Message) receivedObj;
 
                     return obj;

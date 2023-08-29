@@ -1,11 +1,11 @@
 package org.skyme.ui;
 
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.Message;
+import org.skyme.core.MessageType;
 import org.skyme.entity.QQGroup;
 import org.skyme.entity.QQGroupMessage;
 import org.skyme.entity.User;
-import org.skyme.jdbc.TimeUtil;
+import org.skyme.dao.jdbc.TimeUtil;
 import org.skyme.util.NIOObjectUtil;
 
 
@@ -17,7 +17,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.util.Date;
 import java.util.HashMap;
@@ -62,8 +61,15 @@ public class GroupWindowApp extends JFrame {
         this.user = user;
     }
 
+    public JList<User> getMemberList() {
+        return memberList;
+    }
 
-    public GroupWindowApp(SocketChannel socket, QQGroup group, User user,Surface surface) {
+    public void setMemberList(JList<User> memberList) {
+        this.memberList = memberList;
+    }
+
+    public GroupWindowApp(SocketChannel socket, QQGroup group, User user, Surface surface) {
         this.group = group;
         this.user=user;
         this.socket = socket;
@@ -114,6 +120,22 @@ public class GroupWindowApp extends JFrame {
         memberPanel.add(memberScrollPane, BorderLayout.CENTER);
         add(memberPanel, BorderLayout.EAST);
 
+        //获取群成员
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                //请求获取所有群成员
+                Message<Long> longMessage = new Message<>();
+                longMessage.setType(MessageType.QUERY_GROUP_MEMBER);
+                longMessage.setData(group.getGid());
+                try {
+                    NIOObjectUtil.writeObjectToChannel(longMessage,socket);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        });
+
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -138,7 +160,7 @@ public class GroupWindowApp extends JFrame {
             sendToServer.setMes("发送给服务器的"+group.getGid()+"群聊消息");
             sendToServer.setCode(1);
             sendToServer.setType(MessageType.GROUP_SEND_MESSAGE);
-            sendToServer.setDate(qqGroupMessage);
+            sendToServer.setData(qqGroupMessage);
             try {
                 NIOObjectUtil.writeObjectToChannel(sendToServer, socket);
 //                ObjectUtil.sendObject(socket,sendToServer);
@@ -162,7 +184,6 @@ public class GroupWindowApp extends JFrame {
             setLayout(new BorderLayout());
             setOpaque(true);
             setBorder(new EmptyBorder(5, 5, 5, 5));
-
             nameLabel = new JLabel();
             avatarLabel = new JLabel();
             avatarLabel.setPreferredSize(new Dimension(40, 40)); // 设置头像大小

@@ -1,9 +1,9 @@
 package org.skyme.client;
 
+import org.skyme.core.Message;
 import org.skyme.dto.AddFriend;
 import org.skyme.dto.GroupUser;
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.MessageType;
 import org.skyme.entity.QQGroupMessage;
 import org.skyme.entity.QQMessage;
 import org.skyme.entity.User;
@@ -16,7 +16,6 @@ import org.skyme.vo.GroupList;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -138,7 +137,7 @@ public class ClientThread extends Thread {
                         }
 
                         if (type == MessageType.RECEIVE_RESULT) {
-                            QQMessage date = (QQMessage) message.getDate();
+                            QQMessage date = (QQMessage) message.getData();
                             String content = date.getContent();
                             System.out.println("当前聊天对象窗口id" + date.getSendUid());
                             //根据接收到数据进行加入
@@ -146,7 +145,7 @@ public class ClientThread extends Thread {
                             if (chatWindowApp1 == null) {
                                 System.out.println("请求查询好友列表!!");
                                 Message m = new Message<>();
-                                m.setDate(surface.getUser());
+                                m.setData(surface.getUser());
                                 m.setCode(1);
                                 m.setMes("请求查询好友列表");
                                 m.setType(MessageType.FRIENDS_LIST);
@@ -185,7 +184,7 @@ public class ClientThread extends Thread {
                             qqMessage.setFromUid(date.getSendUid());
                             System.out.println("需要接收的"+date.getFromUid());
                             qqMessage.setSendUid(date.getFromUid());
-                            mes.setDate(qqMessage);
+                            mes.setData(qqMessage);
                             mes.setType(MessageType.MES_HISTORY);
                             try {
                                 NIOObjectUtil.writeObjectToChannel(mes,socket);
@@ -199,7 +198,7 @@ public class ClientThread extends Thread {
                                 chatTextArea.append(chatWindowApp1.getFirstUser().getNickname() + ": " + content + "\n");
                             }
                         } else if (type == MessageType.MES_HISTORY_RESULT) {
-                            FriendHistory history = (FriendHistory) message.getDate();
+                            FriendHistory history = (FriendHistory) message.getData();
                             ChatWindowApp chatWindowApp1 = map.get(history.getSendId());
                             List<QQMessage> list = history.getList();
                             JTextArea chatTextArea = chatWindowApp1.getChatTextArea();
@@ -212,7 +211,7 @@ public class ClientThread extends Thread {
                                 }
                             }
                         }else if(type==MessageType.GROUP_LIST_RESULT){
-                            List<GroupList> list = (List<GroupList>) message.getDate();
+                            List<GroupList> list = (List<GroupList>) message.getData();
                             //将上述里面的用户信息添加到list里面
                             HashMap<Long, GroupList> groupUidMap = surface.getGroupUidMap();
                             DefaultListModel<GroupList> groupModel = surface.getGroupModel();
@@ -227,14 +226,14 @@ public class ClientThread extends Thread {
                         }
                         else if (type == MessageType.LOGOUT_RESULT) {
 
-                            if(message.getDate()!=null&&message.getDate().equals(getSurface().getUser().getUid())){
+                            if(message.getData()!=null&&message.getData().equals(getSurface().getUser().getUid())){
                                 //说明是自己
                                 socket.close();//关闭通道
                                 System.exit(0);
                             }
 
                             Message m = new Message<>();
-                            m.setDate(surface.getUser());
+                            m.setData(surface.getUser());
                             m.setCode(1);
                             m.setMes("请求查询好友列表");
                             m.setType(MessageType.FRIENDS_LIST);
@@ -273,7 +272,7 @@ public class ClientThread extends Thread {
                         } else if (type == MessageType.DELETEED_RESULT) {
                             System.out.println("接收到好友被删除的信息");
                             Message<User> m = new Message<>();
-                            m.setDate(surface.getUser());
+                            m.setData(surface.getUser());
                             m.setCode(1);
                             m.setMes("请求查询好友列表");
                             m.setType(MessageType.FRIENDS_LIST);
@@ -315,9 +314,9 @@ public class ClientThread extends Thread {
 
                         }else if (type==MessageType.QUERY_LIKE_USER_RESULT){
 //                    List<String> matchingUsers = surface.getMatchingUsers();
-                            List<User> data = (List<User>) message.getDate();
+                            List<User> data = (List<User>) message.getData();
                             System.out.println("data"+data);
-                            surface.setMatchingUsers((List<User>) message.getDate());
+                            surface.setMatchingUsers((List<User>) message.getData());
                             List<String> matchingUserNicknames;
                             matchingUserNicknames = new ArrayList<>();
                             surface.setMatchingUserNicknames(matchingUserNicknames);
@@ -338,7 +337,7 @@ public class ClientThread extends Thread {
                             //这里用一个确定或者否来判断逻辑
                             //如果接受,那么执行一个accept那么就返回false,这个服务器根据这个具体来判断是否添加,并且通知对方消息即可
                             //
-                            User user1 = (User) message.getDate();
+                            User user1 = (User) message.getData();
                             int choice = JOptionPane.showConfirmDialog(
                                     surface.getContentPane(),
                                     user1.getNickname(),
@@ -355,7 +354,7 @@ public class ClientThread extends Thread {
                                 AddFriend addFriend = new AddFriend();
                                 addFriend.setFromUser(surface.getUser());
                                 addFriend.setSendUser(user1);
-                                message1.setDate(addFriend);
+                                message1.setData(addFriend);
                                 NIOObjectUtil.writeObjectToChannel(message1,socket);
 //                        ObjectUtil.sendObject(socket,message1);
                                 JOptionPane.showMessageDialog(
@@ -364,7 +363,7 @@ public class ClientThread extends Thread {
                                         "好友请求已接受",
                                         JOptionPane.INFORMATION_MESSAGE);
                                 Message m = new Message<>();
-                                m.setDate(surface.getUser());
+                                m.setData(surface.getUser());
                                 m.setCode(1);
                                 m.setMes("请求查询好友列表");
                                 m.setType(MessageType.FRIENDS_LIST);
@@ -416,14 +415,14 @@ public class ClientThread extends Thread {
                             }
 
                         }else if(type==MessageType.SUCCESS_ADD_FRIEND_RESULT){
-                            AddFriend addFriend = (AddFriend) message.getDate();
+                            AddFriend addFriend = (AddFriend) message.getData();
                             JOptionPane.showMessageDialog(
                                     surface.getContentPane(),
                                     addFriend.getFromUser().getNickname()+"接受了你的好友请求",
                                     "好友添加通知",
                                     JOptionPane.INFORMATION_MESSAGE);
                             Message m = new Message<>();
-                            m.setDate(surface.getUser());
+                            m.setData(surface.getUser());
                             m.setCode(1);
                             m.setMes("请求查询好友列表");
                             m.setType(MessageType.FRIENDS_LIST);
@@ -435,7 +434,7 @@ public class ClientThread extends Thread {
                                 throw new RuntimeException(ex);
                             }
                         }else if(type==MessageType.FRIENDSLIST_RESULT){
-                            List<FriendList> list = (List<FriendList>) message.getDate();
+                            List<FriendList> list = (List<FriendList>) message.getData();
                             DefaultListModel<FriendList> listModel = surface.getListModel();
                             //将上述里面的用户信息添加到list里面
                             listModel.removeAllElements();
@@ -448,10 +447,10 @@ public class ClientThread extends Thread {
                             }
 
                         }else if (type==MessageType.GROUP_MESSAGE_HISTORY_RESULT){
-                            List<QQGroupMessage> list= (List<QQGroupMessage>) message.getDate();
+                            List<QQGroupMessage> list= (List<QQGroupMessage>) message.getData();
                             //顺带将
                             Message groupMessage = new Message<>();
-                            groupMessage.setDate(getSurface().getUser());
+                            groupMessage.setData(getSurface().getUser());
                             groupMessage.setCode(1);
                             groupMessage.setMes("请求查询群聊列表");
                             groupMessage.setType(MessageType.GROUP_LIST);
@@ -474,7 +473,7 @@ public class ClientThread extends Thread {
                         }else if(type==MessageType.GROUP_SEND_RESULT){
                             //刷新自己的群列表或对话框->
                             //如果这个群的窗口打开了,那么直接就刷新到群对话框中,否则刷新群消息列表
-                            QQGroupMessage groupMessage = (QQGroupMessage) message.getDate();
+                            QQGroupMessage groupMessage = (QQGroupMessage) message.getData();
                             User user = groupMessage.getUser();
                             String gContent = groupMessage.getgContent();
                             Long gid = groupMessage.getGid();
@@ -487,7 +486,7 @@ public class ClientThread extends Thread {
                                 GroupUser groupUser = new GroupUser();
                                 groupUser.setGid(gid);
                                 groupUser.setUid(getSurface().getUser().getUid());
-                                message1.setDate(groupUser);
+                                message1.setData(groupUser);
                                 message1.setType(MessageType.GROUP_MESSAGE_HISTORY);
                                 try {
                                     NIOObjectUtil.writeObjectToChannel(message1,socket);
@@ -500,7 +499,7 @@ public class ClientThread extends Thread {
 //                        chatArea.append(user.getNickname()+":"+gContent+"\n");
                             }else{
                                 Message gMes = new Message<>();
-                                gMes.setDate(surface.getUser());
+                                gMes.setData(surface.getUser());
                                 gMes.setCode(1);
                                 gMes.setMes("请求查询群聊列表");
                                 gMes.setType(MessageType.GROUP_LIST);
@@ -527,7 +526,7 @@ public class ClientThread extends Thread {
 
                                 //顺带将
                                 Message<Object> groupMessage = new Message<>();
-                                groupMessage.setDate(getSurface().getUser());
+                                groupMessage.setData(getSurface().getUser());
                                 groupMessage.setCode(1);
                                 groupMessage.setMes("请求查询群聊列表");
                                 groupMessage.setType(MessageType.GROUP_LIST);
@@ -555,7 +554,7 @@ public class ClientThread extends Thread {
                                 JOptionPane.showConfirmDialog(null,message .getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
                                 System.out.println("执行登录");
 
-                                login.openFriendListWindow((User) message.getDate());
+                                login.openFriendListWindow((User) message.getData());
                                 //启动线程监听好友列表
                             }else{
                                 JOptionPane.showConfirmDialog(null,message .getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
@@ -565,7 +564,7 @@ public class ClientThread extends Thread {
                             if(message.getCode()==1){
                                 JOptionPane.showMessageDialog(null,message .getMes(),"消息提示",DEFAULT_OPTION);
                                 System.out.println("执行登录");
-                                getLogin().openFriendListWindow((User) message.getDate());
+                                getLogin().openFriendListWindow((User) message.getData());
                                 //启动线程监听好友列表
                             }else{
                                 JOptionPane.showMessageDialog(null,message.getMes(),"消息提示",DEFAULT_OPTION);
@@ -575,7 +574,7 @@ public class ClientThread extends Thread {
                         }else if(type==MessageType.INFO_RESULT){
 
                             DefaultListModel<User> requestListModel = infoWindowApp.getRequestListModel();
-                            List<User> list = (List<User>) message.getDate();
+                            List<User> list = (List<User>) message.getData();
                             if(list != null){
                             for (User user : list) {
                                 requestListModel.addElement(user);
@@ -588,9 +587,15 @@ public class ClientThread extends Thread {
                             }else {
                                 JOptionPane.showMessageDialog(null,message.getMes(),"消息提示",DEFAULT_OPTION);
                             }
+                        }else if(type==MessageType.QUERY_GROUP_MEMBER_RESULT){
+                            JList<User> memberList = groupWindowApp.getMemberList();
+                            DefaultListModel<User> model = (DefaultListModel<User>) memberList.getModel();
+                            model.removeAllElements();
+                            List<User> list= (List<User>)message.getData();
+                            for (User user : list) {
+                                model.addElement(user);
+                            }
                         }
-
-
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

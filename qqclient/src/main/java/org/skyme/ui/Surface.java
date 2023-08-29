@@ -1,6 +1,8 @@
 package org.skyme.ui;
 
 import org.skyme.client.ClientThread;
+import org.skyme.core.Message;
+import org.skyme.core.MessageType;
 import org.skyme.dto.*;
 import org.skyme.entity.QQGroup;
 import org.skyme.entity.QQMessage;
@@ -13,10 +15,9 @@ import org.skyme.vo.GroupList;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,6 +28,7 @@ import javax.swing.border.EmptyBorder;
  * @author Skyme
  */
 public class Surface extends JFrame {
+	private Socket fileSocket;
 
 	private JPanel contentPane;
 	private static final int ICON_SIZE = 40;
@@ -198,11 +200,9 @@ public class Surface extends JFrame {
 		this.clientThread=clientThread;
 		JLabel avatarLabel = new JLabel();
 		this.setLocationRelativeTo(null);
-		setTitle("Skyme-注册");
+
 		avatarLabel.setBounds(10, 32, ICON_SIZE, ICON_SIZE);
-		ImageIcon defaultAvatarIcon = new ImageIcon("F:\\ikun.png"); // 替换为实际路径
-		Image scaledAvatarImage = defaultAvatarIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
-		avatarLabel.setIcon(new ImageIcon(scaledAvatarImage));
+//		avatarLabel.setIcon(new ImageIcon(scaledAvatarImage));
 		setTitle("当前用户"+loggedInUser.getNickname());
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 290, 747);
@@ -235,6 +235,33 @@ public class Surface extends JFrame {
 		JLabel lblNewLabel_1 = new JLabel(loggedInUser.getNickname());
 		lblNewLabel_1.setBounds(117, 36, 56, 24);
 		contentPane.add(lblNewLabel_1);
+		lblNewLabel_1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(e.getClickCount()==2){
+					String newUsername = JOptionPane.showInputDialog("请输入新的昵称");
+//					int result = optionPane.showConfirmDialog(null, "请输入新的用户名", "确认", JOptionPane.OK_CANCEL_OPTION);
+					if (newUsername != null && !newUsername.trim().isEmpty()) {
+						lblNewLabel_1.setText(newUsername); // 将用户输入的文本设置为JTextField的值
+						setTitle("当前用户"+newUsername);
+						user.setNickname(newUsername);
+						//通知服务器修改了昵称
+						Message userMessage = new Message();
+						userMessage.setType(MessageType.MOD_NICKNAME);
+						userMessage.setData(user);
+						userMessage.setMes("发送");
+						userMessage.setCode(1);
+						try {
+							System.out.println("发送修改");
+							NIOObjectUtil.writeObjectToChannel(userMessage,socket);
+						} catch (IOException ex) {
+							throw new RuntimeException(ex);
+						}
+
+					}
+				}
+			}
+		});
 		JButton btnNewButton = new JButton("添加好友");
 		btnNewButton.setBounds(10, 80, 100, 24);
 		contentPane.add(btnNewButton);
@@ -266,6 +293,59 @@ public class Surface extends JFrame {
 				InfoWindowApp infoWindowApp = new InfoWindowApp(socket,user, Surface.this);
 				clientThread.setInfoWindowApp(infoWindowApp);
 				infoWindowApp.setVisible(true);
+			}
+		});
+		avatarLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(e.getClickCount()==2){
+					JFileChooser fileChooser = new JFileChooser();
+					fileChooser.showOpenDialog(Surface.this);
+					File selectedFile = fileChooser.getSelectedFile();
+					// 创建Socket对象，指定IP地址和端口号
+					Socket fileSocket = null;
+					try {
+						fileSocket  = new Socket("127.0.0.1", 8888);
+					} catch (IOException ex) {
+						throw new RuntimeException(ex);
+					}
+					DataOutputStream dataOutputStream=null;
+					try {
+						OutputStream outputStream = fileSocket.getOutputStream();
+						 dataOutputStream = new DataOutputStream(outputStream);
+						dataOutputStream.writeUTF("upload");
+						dataOutputStream.flush();
+						dataOutputStream.writeUTF(user.getUid()+".png");//文件名
+						dataOutputStream.flush();
+						dataOutputStream.writeLong(selectedFile.length());//文件大小
+						dataOutputStream.flush();
+						FileInputStream fileInputStream = new FileInputStream(selectedFile);
+						byte [] bytes = new byte[1024];
+						int len = 0;
+						while((len = fileInputStream .read(bytes)) != -1){
+							dataOutputStream.write(bytes,0,len);
+							dataOutputStream.flush();
+						}
+
+					} catch (IOException ex) {
+						throw new RuntimeException(ex);
+					}finally {
+						try {
+							dataOutputStream.close();
+						} catch (IOException ex) {
+							throw new RuntimeException(ex);
+						}
+						try {
+							fileSocket.close();
+						} catch (IOException ex) {
+							throw new RuntimeException(ex);
+						}
+					}
+					ImageIcon defaultAvatarIcon = new ImageIcon(selectedFile.getAbsolutePath()); // 替换为实际路径
+
+					Image scaledAvatarImage = defaultAvatarIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
+					avatarLabel.setIcon(new ImageIcon(scaledAvatarImage));
+				}
 			}
 		});
 
@@ -333,7 +413,7 @@ public class Surface extends JFrame {
 						AddFriend addFriend = new AddFriend();
 						addFriend.setSendUser(selectedUser);
 						addFriend.setFromUser(user);
-						user1.setDate(addFriend);
+						user1.setData(addFriend);
 						user1.setType(MessageType.ADD_FRIEND);
 						try {
 							NIOObjectUtil.writeObjectToChannel(user1,socket);
@@ -351,24 +431,70 @@ public class Surface extends JFrame {
 
 			@Override
 			public void windowOpened(WindowEvent e) {
+				// 创建Socket对象，指定IP地址和端口号
+				Socket fileSocket = null;
+				try {
+					fileSocket  = new Socket("127.0.0.1", 8888);
+				} catch (IOException ex) {
+					throw new RuntimeException(ex);
+				}
+				try {
+					OutputStream outputStream = fileSocket.getOutputStream();
+					DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+					dataOutputStream.writeUTF("download");
+					dataOutputStream.writeUTF(user.getUid()+".png");
+					dataOutputStream.flush();
+
+				} catch (IOException ex) {
+					throw new RuntimeException(ex);
+				}
+				//写入文件
+				FileOutputStream fileOutputStream=null;
+				try {
+					InputStream inputStream = fileSocket.getInputStream();
+					//
+					DataInputStream dataInputStream = new DataInputStream(inputStream);
+					//读取的文件名称
+					String fileName = dataInputStream.readUTF();
+					//读取文件大小
+					long size = dataInputStream.readLong();
+					fileOutputStream = new FileOutputStream(new File("D:\\NewBeeData\\userAvatar", fileName));
+					byte[] bytes = new byte[1024];
+					int len=0;
+					//写入到本地
+					while ((len=dataInputStream.read(bytes))!=-1){
+						fileOutputStream.write(bytes, 0, len);
+					}
+
+				} catch (IOException ex) {
+					throw new RuntimeException(ex);
+				}finally {
+					try {
+						fileOutputStream.close();
+					} catch (IOException ex) {
+						throw new RuntimeException(ex);
+					}
+					try {
+						fileSocket.close();
+					} catch (IOException ex) {
+						throw new RuntimeException(ex);
+					}
+				}
+				//加载头像内容
+				ImageIcon defaultAvatarIcon = new ImageIcon("D:\\NewBeeData\\userAvatar\\"+user.getUid()+".png"); // 替换为实际路径
+				Image scaledAvatarImage = defaultAvatarIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
+				avatarLabel.setIcon(new ImageIcon(scaledAvatarImage));
 				Message groupMessage = new Message<>();
-				groupMessage.setDate(loggedInUser);
+				groupMessage.setData(loggedInUser);
 				groupMessage.setCode(1);
 				groupMessage.setMes("请求查询群聊列表");
 				groupMessage.setType(MessageType.GROUP_LIST);
 				try {
 					System.out.println("请求查询群列表");
 					NIOObjectUtil.writeObjectToChannel(groupMessage,socket);
-
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
-//				try {
-//					socket.socket().getOutputStream().flush();
-//				} catch (IOException ex) {
-//					throw new RuntimeException(ex);
-//				}
-
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException ex) {
@@ -376,7 +502,7 @@ public class Surface extends JFrame {
 				}
 				//查询好友列表
 				Message m = new Message<>();
-				m.setDate(loggedInUser);
+				m.setData(loggedInUser);
 				m.setCode(1);
 				m.setMes("请求查询好友列表");
 				m.setType(MessageType.FRIENDS_LIST);
@@ -386,28 +512,6 @@ public class Surface extends JFrame {
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
-
-//				try {
-//					Message object = (Message) ObjectUtil.getObject(socket);
-//
-//					if(object.getType()==MessageType.GROUP_LIST_RESULT){
-//						List<GroupList> list = (List<GroupList>) object.getDate();
-//						//将上述里面的用户信息添加到list里面
-//						for (int i = 0; i < list.size(); i++) {
-//							groupUidMap.put(list.get(i).getGroup().getGid(),list.get(i));//将好友放入到本地缓存当中
-//							groupModel.addElement(list.get(i));
-////							list.get(i).getUid()+":"+list.get(i).getNickname()
-//						}
-//						JOptionPane.showMessageDialog(null, object.getMes(), "初始化", JOptionPane.PLAIN_MESSAGE);
-//						clientThread.start();
-//					}else{
-//						JOptionPane.showMessageDialog(null, object.getMes(), "初始化", JOptionPane.PLAIN_MESSAGE);
-//					}
-//
-//
-//				} catch (IOException | ClassNotFoundException ex) {
-//					throw new RuntimeException(ex);
-//				}
 
 			}
 		};
@@ -420,7 +524,7 @@ public class Surface extends JFrame {
 				System.out.println("请求下线");
 				Message<Long> longMessage = new Message<>();
 				longMessage.setType(MessageType.LOGOUT);
-				longMessage.setDate(loggedInUser.getUid());
+				longMessage.setData(loggedInUser.getUid());
 				longMessage.setCode(1);
 				longMessage.setMes("请求下线");
 				try {
@@ -505,7 +609,7 @@ public class Surface extends JFrame {
 						RemoveGroup removeGroup = new RemoveGroup();
 						removeGroup.setGid(selectedGroup.getGroup().getGid());
 						removeGroup.setUid(user.getUid());
-						delete.setDate(removeGroup);
+						delete.setData(removeGroup);
 						try {
 							NIOObjectUtil.writeObjectToChannel(delete,socket);
 //							ObjectUtil.sendObject(socket, delete);
@@ -549,7 +653,7 @@ public class Surface extends JFrame {
 						QQRelation qqRelation = new QQRelation();
 						qqRelation.setFid(selectedUser.getUser().getUid());
 						qqRelation.setUid(user.getUid());
-						delete.setDate(qqRelation);
+						delete.setData(qqRelation);
 						try {
 							NIOObjectUtil.writeObjectToChannel(delete,socket);
 //							ObjectUtil.sendObject(socket, delete);
@@ -584,7 +688,7 @@ public class Surface extends JFrame {
 			GroupUser groupUser = new GroupUser();
 			groupUser.setGid(group.getGid());
 			groupUser.setUid(user.getUid());
-			message.setDate(groupUser);
+			message.setData(groupUser);
 			message.setType(MessageType.GROUP_MESSAGE_HISTORY);
 			try {
 				NIOObjectUtil.writeObjectToChannel(message,socket);
@@ -604,7 +708,7 @@ public class Surface extends JFrame {
 	private void getMatchingUsers(String nickname) throws IOException {
 		// 向服务器发送数据
 		Message message = new Message<>();
-		message.setDate(nickname);
+		message.setData(nickname);
 		message.setCode(1);
 		message.setType(MessageType.QUERY_LIKE_USER);
 		NIOObjectUtil.writeObjectToChannel(message,socket);
@@ -713,7 +817,7 @@ public class Surface extends JFrame {
 				qqMessage.setFromUid(this.user.getUid());
 				System.out.println("需要接收的"+user.getUid());
 				qqMessage.setSendUid(user.getUid());
-				message.setDate(qqMessage);
+				message.setData(qqMessage);
 				message.setType(MessageType.MES_HISTORY);
 				try {
 					NIOObjectUtil.writeObjectToChannel(message,socket);
@@ -789,7 +893,7 @@ public class Surface extends JFrame {
 						AddGroup addGroup = new AddGroup();
 						addGroup.setGroupName(groupName);
 						addGroup.setUid(user.getUid());
-						message.setDate(addGroup);
+						message.setData(addGroup);
 						try {
 							NIOObjectUtil.writeObjectToChannel(message,socket);
 //							ObjectUtil.sendObject(socket,message);
@@ -817,7 +921,7 @@ public class Surface extends JFrame {
 						AddGroup addGroup = new AddGroup();
 						addGroup.setGroupName(groupName);
 						addGroup.setUid(user.getUid());
-						message.setDate(addGroup);
+						message.setData(addGroup);
 						try {
 							NIOObjectUtil.writeObjectToChannel(message,socket);
 						} catch (IOException ex) {

@@ -1,6 +1,6 @@
 package org.skyme.vo;
 
-import org.skyme.dto.Message;
+import org.skyme.core.Message;
 
 import java.io.Serializable;
 

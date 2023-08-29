@@ -1,15 +1,18 @@
 package org.skyme.service.serviceimpl;
 
+import org.skyme.core.Message;
 import org.skyme.core.Request;
 import org.skyme.core.Response;
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.dao.QQMessageDao;
+import org.skyme.dao.UserDao;
+import org.skyme.dao.daoimpl.QQMessageDaoImpl;
+import org.skyme.dao.daoimpl.UserDaoImpl;
+import org.skyme.core.MessageType;
 import org.skyme.entity.QQMessage;
-import org.skyme.dao.SqlUtil;
+import org.skyme.dao.jdbc.SqlUtil;
 import org.skyme.entity.User;
-import org.skyme.jdbc.TimeUtil;
+import org.skyme.dao.jdbc.TimeUtil;
 import org.skyme.service.ChatService;
-import org.skyme.service.UserService;
 import org.skyme.vo.BaseResponse;
 import org.skyme.vo.FriendHistory;
 import org.skyme.vo.FriendList;
@@ -23,14 +26,17 @@ import java.util.*;
  * @Description:
  */
 public class ChatServiceImpl implements ChatService {
+    private QQMessageDao qqMessageDao=new QQMessageDaoImpl();
 
-    private UserService userService = new UserServiceImpl();
+    private UserDao userDao=new UserDaoImpl();
+
+
 
     @Override
     public BaseResponse sendToFriend(Request request, Response response) {
         Message message = request.getMessage();
         MessageType type = message.getType();
-        QQMessage data = (QQMessage) message.getDate();
+        QQMessage data = (QQMessage) message.getData();
         String content = data.getContent();
         Long sendUid = data.getSendUid();//接受者
         System.out.println("服务器转发的sendid" + sendUid);
@@ -47,8 +53,6 @@ public class ChatServiceImpl implements ChatService {
                 //存放到数据库当中
                 SqlUtil.insert(data);
             }
-
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -58,25 +62,20 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public BaseResponse friendHistory(Request request, Response response) {
-
-        Message message = request.getMessage();
-
-        QQMessage data = (QQMessage) message.getDate();
-
+    public BaseResponse friendHistory(QQMessage data, Response response) {
         Long sendUid = data.getSendUid();
-
         Long fromUid = data.getFromUid();
-
-        List<QQMessage> select = SqlUtil.select(QQMessage.class, "SELECT * from (SELECT * FROM `qq_message` WHERE (send_uid=? and from_uid=?) or (send_uid=? AND from_uid=?) ORDER BY send_time DESC LIMIT 10) AS  s  ORDER BY s.mid asc", sendUid, fromUid, fromUid, sendUid);
-
+        List<QQMessage> select = qqMessageDao.select(sendUid, fromUid, fromUid, sendUid);
+//        List<QQMessage> select = SqlUtil.select(QQMessage.class, "SELECT * from (SELECT * FROM `qq_message` WHERE (send_uid=? and from_uid=?) or (send_uid=? AND from_uid=?) ORDER BY send_time DESC LIMIT 10) AS  s  ORDER BY s.mid asc", sendUid, fromUid, fromUid, sendUid);
         for (QQMessage qqMessage : select) {
             if(!fromUid.equals(qqMessage.getFromUid())){
             qqMessage.setStatus(1);
-            SqlUtil.update(qqMessage);
+            int i=qqMessageDao.update(qqMessage);
+
             }
         }
-        List<User> selects = SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 1;", fromUid);
+        List<User> selects = userDao.queryFriends(fromUid);
+//        List<User> selects = SqlUtil.select(User.class, "SELECT u.* FROM `qq_user` u INNER JOIN `qq_relation` r ON u.uid = r.fid WHERE r.uid =? AND r.`status` = 1;", fromUid);
         //根据每个好友再去查询我未读的消息
         List<FriendList> lists = new ArrayList<>();
 
@@ -90,7 +89,6 @@ public class ChatServiceImpl implements ChatService {
             for (Map<String, Object> stringObjectMap : select1) {
                 Set<Map.Entry<String, Object>> entries = stringObjectMap.entrySet();
                 for (Map.Entry<String, Object> entry : entries) {
-
                     if (entry.getValue().getClass() == int.class || entry.getValue().getClass() == Integer.class || entry.getValue().getClass() == Long.class) {
                         nums = (Long) entry.getValue();
                         System.out.println("未读消息:" + nums);
@@ -101,7 +99,6 @@ public class ChatServiceImpl implements ChatService {
             //封装一个类,存放User和未读消息数量Num
             //然后传给客户端一个集合
             lists.add(friendList);
-
         }
             try {
                 response.flushFriendList(fromUid, lists);
@@ -116,7 +113,7 @@ public class ChatServiceImpl implements ChatService {
             mes.setType(MessageType.MES_HISTORY_RESULT);
             mes.setMes("获取历史消息成功");
             mes.setCode(1);
-            mes.setDate(history);
+            mes.setData(history);
             return new BaseResponse(mes);
 
         }

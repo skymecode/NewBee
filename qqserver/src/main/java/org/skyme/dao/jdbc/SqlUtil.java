@@ -1,10 +1,9 @@
-package org.skyme.dao;
+package org.skyme.dao.jdbc;
 
 import org.skyme.annotation.Column;
 import org.skyme.annotation.Id;
 import org.skyme.annotation.ManyToOne;
 import org.skyme.annotation.Table;
-import org.skyme.jdbc.SqlResult;
 
 import java.lang.reflect.Field;
 import java.sql.*;

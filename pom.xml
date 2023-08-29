@@ -8,10 +8,23 @@
     <artifactId>QQ</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <modules>
         <module>qqclient</module>
         <module>qqserver</module>
-        <module>qqnioserver</module>
     </modules>
 
     <properties>

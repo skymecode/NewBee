@@ -2,8 +2,8 @@ package org.skyme.ui;
 
 import org.skyme.Main;
 import org.skyme.client.ClientThread;
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.Message;
+import org.skyme.core.MessageType;
 import org.skyme.entity.User;
 import org.skyme.util.NIOObjectUtil;
 
@@ -116,7 +116,7 @@ public class Login extends JFrame {
 				message.setType(MessageType.LOGIN);
 				message.setMes("请求登录");
 				message.setCode(1);
-				message.setDate(user);
+				message.setData(user);
 				try {
 					NIOObjectUtil.writeObjectToChannel(message, Login.this.socket);
 					clientThread.setLogin(Login.this);

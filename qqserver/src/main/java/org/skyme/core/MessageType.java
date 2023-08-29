@@ -1,4 +1,4 @@
-package org.skyme.dto;
+package org.skyme.core;
 
 import java.io.Serializable;
 
@@ -71,6 +71,11 @@ public enum MessageType implements Serializable {
 
     INFO("/user/info"),
     INFO_RESULT("info"),
+    MOD_NICKNAME("/user/modNickname"),
+    MOD_NICKNAME_RESULT("modNickname"),
+
+    QUERY_GROUP_MEMBER("/group/queryMembers"),
+    QUERY_GROUP_MEMBER_RESULT(""),
 
     NORMAL_RESULT(""), QUIT_GROUP("/group/quitGroup"),QUIT_GROUP_RESULT("quit_group_result");
 

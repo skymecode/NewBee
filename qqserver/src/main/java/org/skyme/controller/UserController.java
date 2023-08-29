@@ -1,7 +1,11 @@
 package org.skyme.controller;
 
+import org.skyme.core.Message;
 import org.skyme.core.Request;
 import org.skyme.core.Response;
+import org.skyme.dto.AddFriend;
+import org.skyme.entity.QQRelation;
+import org.skyme.entity.User;
 import org.skyme.service.UserService;
 import org.skyme.service.serviceimpl.UserServiceImpl;
 import org.skyme.vo.BaseResponse;
@@ -17,31 +21,45 @@ public class UserController {
 
 private UserService userService=new UserServiceImpl();
     public BaseResponse register(Request request, Response response){
-       return userService.register(request,response);
+        Message message = request.getMessage();
+        User date = (User) message.getData();
+       return userService.register(date,response);
     }
 
     public BaseResponse login(Request request, Response response){
-        return userService.login(request,response);
+        Message message = request.getMessage();
+        User data = (User) message.getData();
+        return userService.login(data,response);
     }
 
     public BaseResponse queryFriends(Request request, Response response){
-        return userService.queryFriends(request,response);
+        Message message = request.getMessage();
+        User data = (User) message.getData();
+        return userService.queryFriends(data,response);
     }
     public BaseResponse logout(Request request, Response response){
-        return userService.logout(request,response);
+        Message message = request.getMessage();
+        Long uid = (Long) message.getData();
+        return userService.logout(uid,response);
     }
 
 
     public BaseResponse deleteFriend(Request request,Response response) throws IOException {
-        return userService.deleteFriend(request, response);
+        Message message = request.getMessage();
+        QQRelation qqRelation = (QQRelation) message.getData();
+        return userService.deleteFriend(qqRelation, response);
 
     }
     public BaseResponse queryLikeUser(Request request,Response response) throws IOException {
-        return userService.queryLikeUsers(request, response);
+        Message message = request.getMessage();
+        String nickName = (String) message.getData();
+        return userService.queryLikeUsers(nickName, response);
 
     }
     public BaseResponse addFriend(Request request,Response response) throws IOException {
-        return userService.addFriend(request, response);
+        Message message = request.getMessage();
+        AddFriend add = (AddFriend) message.getData();
+        return userService.addFriend(add, response);
 
     }
 
@@ -53,7 +71,15 @@ private UserService userService=new UserServiceImpl();
         return userService.refuseFriend(request, response);
     }
     public BaseResponse info(Request request,Response response){
-        return userService.queryInfo(request, response);
+        Message<User> message = request.getMessage();
+        User user = message.getData();
+        return userService.queryInfo(user, response);
+    }
+    public BaseResponse modNickname(Request request,Response response){
+        System.out.println("执行到controller");
+        Message<User> message = request.getMessage();
+        User user = message.getData();
+        return userService.modNickname(user, response);
     }
 
 }

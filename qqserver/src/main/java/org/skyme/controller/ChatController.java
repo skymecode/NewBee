@@ -1,7 +1,9 @@
 package org.skyme.controller;
 
+import org.skyme.core.Message;
 import org.skyme.core.Request;
 import org.skyme.core.Response;
+import org.skyme.entity.QQMessage;
 import org.skyme.service.ChatService;
 import org.skyme.service.serviceimpl.ChatServiceImpl;
 import org.skyme.vo.BaseResponse;
@@ -17,6 +19,10 @@ public class ChatController {
         return chatService.sendToFriend(request,response);
     }
     public BaseResponse friendHistory(Request request, Response response){
-        return chatService.friendHistory(request,response);
+        Message message = request.getMessage();
+        QQMessage data = (QQMessage) message.getData();
+        return chatService.friendHistory(data,response);
     }
+
+
 }

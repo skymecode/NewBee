@@ -1,17 +1,12 @@
 package org.skyme.core;
 
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
 import org.skyme.util.NIOObjectUtil;
 import org.skyme.vo.BaseResponse;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.Socket;
-import java.net.SocketException;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 
@@ -44,9 +39,11 @@ public class ServerTask implements Runnable{
                 if(socket.isOpen()){
                 Object o = NIOObjectUtil.readObjectFromChannel(socket);
                 Message mes= (Message) o;
+
                 if(o==null){
                     return;
                 }
+                    System.out.println("进入");
                 MessageType type = mes.getType();
                 String path = type.getPath();
                 String path1 = path.substring(0,path.indexOf("/",1));
@@ -64,7 +61,7 @@ public class ServerTask implements Runnable{
                 Message message = response1.getMessage();
                 NIOObjectUtil.writeObjectToChannel(message,socket);
                 System.out.println("接收数据后");
-                if(message.getType()==MessageType.LOGOUT_RESULT){
+                if(message!=null&&message.getType()==MessageType.LOGOUT_RESULT){
                     socket.close();
                 }
             }

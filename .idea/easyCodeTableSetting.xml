@@ -207,7 +207,7 @@
                   <ColumnInfoDTO>
                     <option name="custom" value="false" />
                     <option name="ext" value="{}" />
-                    <option name="name" value="sendtime" />
+                    <option name="name" value="sendTime" />
                     <option name="type" value="java.util.Date" />
                   </ColumnInfoDTO>
                 </list>
@@ -217,6 +217,46 @@
               <option name="saveModelName" value="qqserver" />
               <option name="savePackageName" value="org.skyme" />
               <option name="savePath" value="./qqserver/src/main/java/org/skyme" />
+              <option name="templateGroupName" value="Default" />
+            </TableInfoDTO>
+          </value>
+        </entry>
+        <entry key="qq.qq_relation">
+          <value>
+            <TableInfoDTO>
+              <option name="fullColumn">
+                <list>
+                  <ColumnInfoDTO>
+                    <option name="custom" value="false" />
+                    <option name="ext" value="{}" />
+                    <option name="name" value="rid" />
+                    <option name="type" value="java.lang.Long" />
+                  </ColumnInfoDTO>
+                  <ColumnInfoDTO>
+                    <option name="custom" value="false" />
+                    <option name="ext" value="{}" />
+                    <option name="name" value="uid" />
+                    <option name="type" value="java.lang.Long" />
+                  </ColumnInfoDTO>
+                  <ColumnInfoDTO>
+                    <option name="custom" value="false" />
+                    <option name="ext" value="{}" />
+                    <option name="name" value="fid" />
+                    <option name="type" value="java.lang.Long" />
+                  </ColumnInfoDTO>
+                  <ColumnInfoDTO>
+                    <option name="custom" value="false" />
+                    <option name="ext" value="{}" />
+                    <option name="name" value="status" />
+                    <option name="type" value="java.lang.Integer" />
+                  </ColumnInfoDTO>
+                </list>
+              </option>
+              <option name="name" value="QqRelation" />
+              <option name="preName" value="" />
+              <option name="saveModelName" value="qqnioserver" />
+              <option name="savePackageName" value="" />
+              <option name="savePath" value="./qqnioserver/src/main/java" />
               <option name="templateGroupName" value="Default" />
             </TableInfoDTO>
           </value>
@@ -267,6 +307,12 @@
                     <option name="ext" value="{}" />
                     <option name="name" value="loginTime" />
                     <option name="type" value="java.util.Date" />
+                  </ColumnInfoDTO>
+                  <ColumnInfoDTO>
+                    <option name="custom" value="false" />
+                    <option name="ext" value="{}" />
+                    <option name="name" value="online" />
+                    <option name="type" value="java.lang.Integer" />
                   </ColumnInfoDTO>
                 </list>
               </option>

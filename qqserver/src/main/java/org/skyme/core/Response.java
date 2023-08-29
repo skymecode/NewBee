@@ -1,17 +1,11 @@
 package org.skyme.core;
 
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
 import org.skyme.entity.User;
 import org.skyme.util.NIOObjectUtil;
 
 import org.skyme.vo.FriendList;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +36,7 @@ public class Response {
                 Message message = new Message();
                 message.setMes("好友上线");
                 message.setType(MessageType.LOGOUT_RESULT);
-                message.setDate(null);
+                message.setData(null);
                 message.setCode(1);
                 try {
                     NIOObjectUtil.writeObjectToChannel(message,onlineUsers.get(uid1));
@@ -118,7 +112,7 @@ public class Response {
                 Message message = new Message();
                 message.setMes("好友下线");
                 message.setType(MessageType.LOGOUT_RESULT);
-                message.setDate(uid);
+                message.setData(uid);
                 message.setCode(1);
                 NIOObjectUtil.writeObjectToChannel(message,onlineUsers.get(uid1));
 //                ObjectUtil.sendObject(onlineUsers.get(uid1),message);
@@ -134,7 +128,7 @@ public class Response {
         Message message = new Message();
         message.setMes("刷新列表");
         message.setType(MessageType.FRIENDSLIST_RESULT);
-        message.setDate(lists);
+        message.setData(lists);
         message.setCode(1);
         NIOObjectUtil.writeObjectToChannel(message,socket1);
 //        ObjectUtil.sendObject(socket,message);
@@ -160,14 +154,12 @@ public class Response {
 
     public void deleteFriend(User user, Long uid) throws IOException {
         Map<Long, SocketChannel> onlineUsers = server.getOnlineUsers();
-
         Message message = new Message();
         message.setMes("已经被好友"+user.getNickname()+"删除");
         message.setType(MessageType.DELETEED_RESULT);
-        message.setDate(null);
+        message.setData(null);
         message.setCode(1);
         NIOObjectUtil.writeObjectToChannel(message,onlineUsers.get(uid));
-
     }
 
     public void sendGroupMessage(Long uid, Message message) {
@@ -180,5 +172,8 @@ public class Response {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void flushList(Long uid) {
     }
 }

@@ -1,7 +1,7 @@
 package org.skyme.ui;
 
-import org.skyme.dto.Message;
-import org.skyme.dto.MessageType;
+import org.skyme.core.Message;
+import org.skyme.core.MessageType;
 import org.skyme.entity.QQMessage;
 import org.skyme.entity.User;
 import org.skyme.util.NIOObjectUtil;
@@ -14,7 +14,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 
@@ -146,7 +145,7 @@ public class ChatWindowApp extends JFrame {
             System.out.println("需要接收的"+firstUser.getUid());
             qqMessage.setSendUid(firstUser.getUid());
             qqMessage.setStatus(0);//默认是未读
-            message1.setDate(qqMessage);
+            message1.setData(qqMessage);
             try {
                 NIOObjectUtil.writeObjectToChannel(message1,socket);
 //                ObjectUtil.sendObject(socket,message1);
