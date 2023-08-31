@@ -8,6 +8,7 @@ import org.skyme.entity.QQGroup;
 import org.skyme.entity.QQMessage;
 import org.skyme.entity.QQRelation;
 import org.skyme.entity.User;
+import org.skyme.ui.reconnect.Reconnect;
 import org.skyme.util.NIOObjectUtil;
 
 import org.skyme.vo.FriendList;
@@ -98,93 +99,68 @@ public class Surface extends JFrame {
 		this.matchingUsers = matchingUsers;
 
 	}
-
 	public JList<FriendList> getFriendList() {
 		return friendList;
 	}
-
 	public void setFriendList(JList<FriendList> friendList) {
 		this.friendList = friendList;
 	}
-
 	public JList<GroupList> getGroupList() {
 		return groupList;
 	}
-
 	public void setGroupList(JList<GroupList> groupList) {
 		this.groupList = groupList;
 	}
-
-
 	public User getUser() {
 		return user;
 	}
-
 	public void setUser(User user) {
 		this.user = user;
 	}
-
 	public InfoWindowApp getInfoWindowApp() {
 		return infoWindowApp;
 	}
-
 	public void setInfoWindowApp(InfoWindowApp infoWindowApp) {
 		this.infoWindowApp = infoWindowApp;
 	}
-
 	/**
 	 * Launch the application.
 	 *
-
 	 */
-
-
 	public ClientThread getClientThread() {
 		return clientThread;
 	}
-
 	public void setClientThread(ClientThread clientThread) {
 		this.clientThread = clientThread;
 	}
-
 	public HashMap<Long, ChatWindowApp> getMap() {
 		return map;
 	}
-
 	public void setMap(HashMap<Long, ChatWindowApp> map) {
 		this.map = map;
 	}
-
 	public HashMap<Long, FriendList> getFriendUidMap() {
 		return friendUidMap;
 	}
-
 	public void setFriendUidMap(HashMap<Long, FriendList> friendUidMap) {
 		this.friendUidMap = friendUidMap;
 	}
-
 	private DefaultListModel<FriendList> listModel;
-
 	public DefaultListModel<FriendList> getListModel() {
 		return listModel;
 	}
-
 	public void setListModel(DefaultListModel<FriendList> listModel) {
 		this.listModel = listModel;
 	}
-
 	public HashMap<Long, GroupList> getGroupUidMap() {
 		return groupUidMap;
 	}
-
 	public DefaultListModel<GroupList> getGroupModel() {
 		return groupModel;
 	}
-
 	public void setGroupModel(DefaultListModel<GroupList> groupModel) {
 		this.groupModel = groupModel;
 	}
-
 	public void setGroupUidMap(HashMap<Long, GroupList> groupUidMap) {
 		this.groupUidMap = groupUidMap;
 	}
@@ -206,6 +182,8 @@ public class Surface extends JFrame {
 		setTitle("当前用户"+loggedInUser.getNickname());
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 290, 747);
+		setMinimumSize(getSize());
+		setMaximumSize(getSize());
 		friendRadioButton = new JRadioButton("好友");
 		groupChatRadioButton = new JRadioButton("群聊");
 		contentButtonGroup = new ButtonGroup();
@@ -305,7 +283,7 @@ public class Surface extends JFrame {
 					// 创建Socket对象，指定IP地址和端口号
 					Socket fileSocket = null;
 					try {
-						fileSocket  = new Socket("127.0.0.1", 8888);
+						fileSocket  = new Socket("192.168.0.33", 8089);
 					} catch (IOException ex) {
 						throw new RuntimeException(ex);
 					}
@@ -348,7 +326,6 @@ public class Surface extends JFrame {
 				}
 			}
 		});
-
 		// 添加按钮点击事件监听器
 		addGroupButton.addActionListener(new ActionListener() {
 			@Override
@@ -434,7 +411,7 @@ public class Surface extends JFrame {
 				// 创建Socket对象，指定IP地址和端口号
 				Socket fileSocket = null;
 				try {
-					fileSocket  = new Socket("127.0.0.1", 8888);
+					fileSocket  = new Socket("192.168.0.33", 8089);
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
@@ -442,9 +419,9 @@ public class Surface extends JFrame {
 					OutputStream outputStream = fileSocket.getOutputStream();
 					DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
 					dataOutputStream.writeUTF("download");
+					dataOutputStream.flush();
 					dataOutputStream.writeUTF(user.getUid()+".png");
 					dataOutputStream.flush();
-
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
@@ -458,19 +435,32 @@ public class Surface extends JFrame {
 					String fileName = dataInputStream.readUTF();
 					//读取文件大小
 					long size = dataInputStream.readLong();
-					fileOutputStream = new FileOutputStream(new File("D:\\NewBeeData\\userAvatar", fileName));
-					byte[] bytes = new byte[1024];
-					int len=0;
-					//写入到本地
-					while ((len=dataInputStream.read(bytes))!=-1){
-						fileOutputStream.write(bytes, 0, len);
+					File file = new File("C:\\NewBeeData\\userAvatar");
+					if(!file.exists()){
+						file.mkdirs();//创建目录
+						fileOutputStream = new FileOutputStream(new File("C:\\NewBeeData\\userAvatar", fileName));
+						byte[] bytes = new byte[1024];
+						int len=0;
+						//写入到本地
+						while ((len=dataInputStream.read(bytes))!=-1){
+							fileOutputStream.write(bytes, 0, len);
+						}
+					}else{
+						fileOutputStream = new FileOutputStream(new File("C:\\NewBeeData\\userAvatar", fileName));
+						byte[] bytes = new byte[1024];
+						int len=0;
+						//写入到本地
+						while ((len=dataInputStream.read(bytes))!=-1){
+							fileOutputStream.write(bytes, 0, len);
+						}
 					}
-
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}finally {
 					try {
+						if(fileOutputStream!=null){
 						fileOutputStream.close();
+						}
 					} catch (IOException ex) {
 						throw new RuntimeException(ex);
 					}
@@ -481,7 +471,12 @@ public class Surface extends JFrame {
 					}
 				}
 				//加载头像内容
-				ImageIcon defaultAvatarIcon = new ImageIcon("D:\\NewBeeData\\userAvatar\\"+user.getUid()+".png"); // 替换为实际路径
+				File file = new File("C:\\NewBeeData\\userAvatar\\"+user.getUid()+".png");
+				if(!file.exists()){
+					//没有头像就去获取默认头像
+					file=new File("C:\\NewBeeData\\userAvatar\\default.png");
+				}
+				ImageIcon defaultAvatarIcon = new ImageIcon(file.getAbsolutePath()); // 替换为实际路径
 				Image scaledAvatarImage = defaultAvatarIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
 				avatarLabel.setIcon(new ImageIcon(scaledAvatarImage));
 				Message groupMessage = new Message<>();
@@ -521,7 +516,6 @@ public class Surface extends JFrame {
 			public void windowClosing(WindowEvent e) {
 				// 在窗口关闭时执行下线操作
 				// 发送下线消息或其他下线逻辑
-				System.out.println("请求下线");
 				Message<Long> longMessage = new Message<>();
 				longMessage.setType(MessageType.LOGOUT);
 				longMessage.setData(loggedInUser.getUid());
@@ -534,10 +528,15 @@ public class Surface extends JFrame {
 					throw new RuntimeException(ex);
 				}
 				setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
+				//等待3s
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException ex) {
+					throw new RuntimeException(ex);
+				}
+				System.exit(0);
 			}
 		});
-
 		groupList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -563,19 +562,17 @@ public class Surface extends JFrame {
             }
         });
 		friendList.addMouseListener(new MouseAdapter() {
+
+
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2) { // 双击事件
 					int index = friendList.locationToIndex(e.getPoint());
-					System.out.println("进入双击事件");
-					System.out.println("index:"+index);
 					if (index >= 0) {
 						if(isShowing()){
-							System.out.println(1);
 							openChatWindow(friendUidMap.get(listModel.getElementAt(index).getUser().getUid()).getUser());
 //						listModel.getElementAt(index).substring(0,listModel.getElementAt(index).indexOf(":"))))
 						}else{
-							System.out.println(2);
 							openGroupChatWindow(groupModel.getElementAt(index).getGroup());
 						}
 					}
@@ -624,10 +621,8 @@ public class Surface extends JFrame {
 		JPopupMenu popupMenu = new JPopupMenu();
 		JMenuItem deleteFriendMenuItem = new JMenuItem("删除好友");
 		popupMenu.add(deleteFriendMenuItem);
-
 		// 将右键菜单添加到好友列表
 		friendList.setComponentPopupMenu(popupMenu);
-
 		// 添加删除好友选项的动作监听器
 		deleteFriendMenuItem.addActionListener(new ActionListener() {
 			@Override
@@ -671,11 +666,7 @@ public class Surface extends JFrame {
 				}
 			}
 		});
-
-
-	
 	}
-
 	private void openGroupChatWindow(QQGroup group) {
 		SwingUtilities.invokeLater(() -> {
 			System.out.println("点开的群聊对象:"+group.getGid());
@@ -726,17 +717,17 @@ public class Surface extends JFrame {
 			setBorder(new EmptyBorder(5, 5, 5, 5));
 
 			// 使用默认头像图标
-			defaultIcon = new ImageIcon("F:\\ikun.png");
+			defaultIcon = new ImageIcon("C:\\ikun.png");
 		}
 
 		@Override
 		public Component getListCellRendererComponent(JList<? extends GroupList> list, GroupList value, int index, boolean isSelected, boolean cellHasFocus) {
 			String gName = value.getGroup().getGName();
-			setText(gName);
+			setText("<html><h3><font color='blue'>"+value.getGroup().getGName()+"</font></h3></html>");
 			if(value.getNums()>0){
-				String text = getText();
-				text=text+"  未读:"+value.getNums();
-				setText(text);
+//				String text = getText();
+//				text=text+"  未读:"+value.getNums();
+				setText("<html><h3><font color='blue'>"+value.getGroup().getGName()+"</font></h3>未读:"+value.getNums()+"</html>");
 			}
 			Image scaledImage = defaultIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
 			setIcon(new ImageIcon(scaledImage));
@@ -763,7 +754,7 @@ public class Surface extends JFrame {
             setBorder(new EmptyBorder(5, 5, 5, 5));
 
             // 使用默认头像图标
-            defaultIcon = new ImageIcon("F:\\ikun.png");
+            defaultIcon = new ImageIcon("C:\\ikun.png");
         }
 
 
@@ -773,17 +764,23 @@ public class Surface extends JFrame {
 
 
 		 if(value.getUser().getOnline()==1){
-			 setText(value.getUser().getNickname()+"  "+"\t在线");
+			 setText("<html><h3><font color='green'>"+value.getUser().getNickname()+"</front></h3>"+"  "+"\t在线");
 
 
 		 }else{
-			 setText(value.getUser().getNickname()+"  "+"\t离线");
+			 setText("<html><h3><font color='green'>"+value.getUser().getNickname()+"</front></h3>"+"  "+"\t离线");
+
 		 }
-		 if(value.getNums()>0){
-			 String text = getText();
-			 text=text+"  未读:"+value.getNums();
-			 setText(text);
-		 }
+		   if(value.getNums()>0){
+			   String text = getText();
+			   text=text+"  未读:"+value.getNums()+"</html>";
+			   setText(text);
+		   }else{
+			   String text = getText();
+			   text=text+"</html>";
+			   setText(text);
+		   }
+
 
 		 Image scaledImage = defaultIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
             setIcon(new ImageIcon(scaledImage));

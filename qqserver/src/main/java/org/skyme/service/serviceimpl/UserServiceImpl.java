@@ -39,11 +39,11 @@ public class UserServiceImpl implements UserService {
         String password = data.getPassword();
         try {
             String md5Str = MD5Util.getMD5Str(password);
-            System.out.println("加密后的"+md5Str);
+
             data.setPassword(md5Str);
             int insert = userDao.insert(data);
 //            int insert = SqlUtil.insert(date);
-            System.out.println("注册状态"+insert);
+
             BaseResponse baseResponse = new BaseResponse();
             if(insert>0){
                 Message<String> mes = new Message<>();
@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService {
         User user = userDao.queryUserByUsername(data.getUsername());
         BaseResponse baseResponse = new BaseResponse();
         Message mes = new Message<>();
-        if(user.getUid()>0){
+        if(user!=null){
             //说明用户存在,对密码匹配
             String password = data.getPassword();
             String md5Str=null;
@@ -83,8 +83,7 @@ public class UserServiceImpl implements UserService {
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println(md5Str);
-            System.out.println(user.getPassword());
+
 
             if(md5Str.equals(user.getPassword())){
                 //密码正确
@@ -92,7 +91,7 @@ public class UserServiceImpl implements UserService {
                 user.setOnline(1);
                 int up= userDao.update(user);
 //                int up = SqlUtil.update(user);
-                System.out.println("用户登录数据更新");
+
                 if(up>0) {
                     mes.setCode(1);//失败
                     mes.setData(user);
@@ -152,7 +151,7 @@ public class UserServiceImpl implements UserService {
 
                    if(entry.getValue().getClass() == int.class || entry.getValue().getClass()==Integer.class || entry.getValue().getClass()==Long.class){
                        nums = (Long) entry.getValue();
-                       System.out.println("未读消息:"+nums);
+
                    }
                 }
             }
@@ -207,7 +206,7 @@ public class UserServiceImpl implements UserService {
             if(!list.get(i).getFid().equals(uid)) {
                 //如果好友在线则通知好友
                 if (response.isOnline(fid)) {
-                    System.out.println("已经向" + fid + "发送通知了");
+
                     response.deleteFriend(user, fid);
                 }
             }
@@ -239,30 +238,30 @@ public class UserServiceImpl implements UserService {
             mes.setData(add.getFromUser());
             response.sendAddMessage(add.getSendUser().getUid(), mes);
         }else{
-            //这里暂时只能在线加好友,后面会实现消息中心功能
-            //不在线则把这二者的关系改成2,待加好友
+            //不在线一边改为2，一边改为3
             QQRelation qqRelation = new QQRelation();
-            qqRelation.setStatus(2);
+            qqRelation.setStatus(3);
             qqRelation.setFid(add.getSendUser().getUid());
             qqRelation.setUid(add.getFromUser().getUid());
-            List<QQRelation> list = qqRelationDao.queryRelation(add.getFromUser().getUid(), add.getSendUser().getUid(), add.getFromUser().getUid(), add.getSendUser().getUid());
+            List<QQRelation> list = qqRelationDao.queryRelation(add.getFromUser().getUid(), add.getSendUser().getUid(), add.getSendUser().getUid(), add.getFromUser().getUid());
 //            List<QQRelation> list= SqlUtil.select(QQRelation.class, "select * from qq_relation where (uid=? and fid=?) or (fid=? and uid=?)", );
             if(list.isEmpty()){
                 int insert=  qqRelationDao.insert(qqRelation);
-//                 = SqlUtil.insert(qqRelation);
                 qqRelation.setFid(add.getFromUser().getUid());
                 qqRelation.setUid(add.getSendUser().getUid());
                 qqRelation.setStatus(2);
                 int insert1 = qqRelationDao.insert(qqRelation);
-//                SqlUtil.insert(qqRelation);
             }else{
                 for (QQRelation relation : list) {
-                    relation.setStatus(2);
+                    if(relation.getUid().equals(add.getFromUser().getUid())){
+                        relation.setStatus(3);
+                    }else{
+                        relation.setStatus(2);
+                    }
                     int i = qqRelationDao.update(relation);
                 }
             }
         }
-//        System.out.println("加好友");
         Message message1 = new Message();
         message1.setCode(1);
         message1.setData(null);
@@ -280,7 +279,7 @@ public class UserServiceImpl implements UserService {
         //向数据库中加入关系
         //先查询,如果存在那么置为1状态否则新建插入
         List<QQRelation> list = SqlUtil.select(QQRelation.class, "SELECT * FROM qq_relation WHERE (uid=? and fid=?) or (uid=? AND fid=?)", uid, fid, fid, uid);
-        if(list != null){
+        if(!list.isEmpty()){
             for (int i = 0; i < list.size(); i++) {
                 list.get(i).setStatus(1);
                 SqlUtil.update(list.get(i));
@@ -303,7 +302,7 @@ public class UserServiceImpl implements UserService {
             message1.setData(addFriend);
             message1.setType(MessageType.SUCCESS_ADD_FRIEND_RESULT);
             response.sendAcceptedMessage(addFriend.getSendUser().getUid(),message1);
-            System.out.println("发送刷新列表响应");
+
         }
         Message message1 = new Message();
         message1.setType(MessageType.NORMAL_RESULT);
@@ -332,7 +331,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public BaseResponse modNickname(User user, Response response) {
         int update = userDao.update(user);
-        System.out.println("修改昵称"+update);
+
 //        List<User> users = userDao.queryFriends(user.getUid());
 //        for (User user1 : users) {
 //            if(response.isOnline(user1.getUid())){

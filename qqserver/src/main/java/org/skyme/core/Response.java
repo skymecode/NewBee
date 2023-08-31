@@ -65,7 +65,7 @@ public class Response {
 //        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
         message.setType(MessageType.RECEIVE_RESULT);
         NIOObjectUtil.writeObjectToChannel(message,socket1);
-        System.out.println("发送给"+uid+"成功");
+
         return 1;
     }
     public int sendAddMessage(Long uid, Message message) throws IOException {
@@ -81,7 +81,7 @@ public class Response {
         message.setType(MessageType.ADD_FRIEND_RESULT);
         NIOObjectUtil.writeObjectToChannel(message,socket1);
 //        objectOutputStream.writeObject(message);
-        System.out.println("发送给"+uid+"成功");
+
         return 1;
     }
     public int sendAcceptedMessage(Long uid, Message message) throws IOException {
@@ -97,7 +97,7 @@ public class Response {
         message.setType(MessageType.SUCCESS_ADD_FRIEND_RESULT);
         NIOObjectUtil.writeObjectToChannel(message,socket1);
 //        objectOutputStream.writeObject(message);
-        System.out.println("发送给"+uid+"成功");
+
         return 1;
     }
 

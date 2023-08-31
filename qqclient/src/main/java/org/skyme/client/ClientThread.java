@@ -139,7 +139,7 @@ public class ClientThread extends Thread {
                         if (type == MessageType.RECEIVE_RESULT) {
                             QQMessage date = (QQMessage) message.getData();
                             String content = date.getContent();
-                            System.out.println("当前聊天对象窗口id" + date.getSendUid());
+
                             //根据接收到数据进行加入
                             ChatWindowApp chatWindowApp1 = map.getOrDefault(date.getFromUid(), null);
                             if (chatWindowApp1 == null) {
@@ -155,26 +155,6 @@ public class ClientThread extends Thread {
                                 } catch (IOException ex) {
                                     throw new RuntimeException(ex);
                                 }
-//                        try {
-//                            Message object = (Message) ObjectUtil.getObject(socket);
-//
-//                            if(object.getType()==MessageType.FRIENDSLIST_RESULT) {
-//                                List<FriendList> list = (List<FriendList>) object.getDate();
-//                                //将上述里面的用户信息添加到list里面
-//                                for (int i = 0; i < list.size(); i++) {
-//                                    surface.getFriendUidMap().put(list.get(i).getUser().getUid(), list.get(i));//将好友放入到本地缓存当中
-//                                    surface.getListModel().addElement(list.get(i));
-////							list.get(i).getUid()+":"+list.get(i).getNickname()
-//                                }
-////                                JOptionPane.showMessageDialog(null, object.getMes(), "初始化", JOptionPane.PLAIN_MESSAGE);
-//
-////                            }else{
-////                                JOptionPane.showMessageDialog(null, object.getMes(), "初始化", JOptionPane.PLAIN_MESSAGE);
-////                            }
-//                            }
-//                        }catch(IOException e){
-//                                throw new RuntimeException(e);
-//                            }
                                 continue;
                             }
                             //得到最新消息
@@ -205,9 +185,22 @@ public class ClientThread extends Thread {
                             chatTextArea.setText("");
                             for (int i = 0; i < list.size(); i++) {
                                 if (list.get(i).getFromUid().equals(chatWindowApp1.getUser().getUid())) {
-                                    chatTextArea.append(chatWindowApp1.getUser().getNickname() + ": " + list.get(i).getContent() + "\n");
+                                    if(list.get(i).getFile()!=null){
+                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getUser().getNickname() + ": " + list.get(i).getFile()+ "\n");
+                                        chatTextArea.append("\n");
+                                    }else{
+                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getUser().getNickname() + ": " + list.get(i).getContent() + "\n");
+                                        chatTextArea.append("\n");
+                                    }
+
                                 } else {
-                                    chatTextArea.append(chatWindowApp1.getFirstUser().getNickname() + ": " + list.get(i).getContent() + "\n");
+                                    if(list.get(i).getFile()!=null){
+                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getFirstUser().getNickname() + ": " + list.get(i).getFile()+ "\n");
+                                        chatTextArea.append("\n");
+                                    }else{
+                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getFirstUser().getNickname()+ ": " + list.get(i).getContent() + "\n");
+                                        chatTextArea.append("\n");
+                                    }
                                 }
                             }
                         }else if(type==MessageType.GROUP_LIST_RESULT){
@@ -219,13 +212,12 @@ public class ClientThread extends Thread {
                             for (int i = 0; i < list.size(); i++) {
                                 groupUidMap.put(list.get(i).getGroup().getGid(),list.get(i));//将好友放入到本地缓存当中
                                 groupModel.addElement(list.get(i));
-//							list.get(i).getUid()+":"+list.get(i).getNickname()
+//
                             }
-//                    JOptionPane.showMessageDialog(null, object.getMes(), "初始化", JOptionPane.PLAIN_MESSAGE);
+//
 //
                         }
                         else if (type == MessageType.LOGOUT_RESULT) {
-
                             if(message.getData()!=null&&message.getData().equals(getSurface().getUser().getUid())){
                                 //说明是自己
                                 socket.close();//关闭通道
@@ -243,32 +235,7 @@ public class ClientThread extends Thread {
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
                             }
-//                    try {
-//                        Message object = (Message) ObjectUtil.getObject(socket);
-//                        System.out.println(object.getType().getPath());
 //
-//                        if (object.getType() == MessageType.FRIENDSLIST_RESULT) {
-//                            List<FriendList> list = (List<FriendList>) object.getDate();
-//                            DefaultListModel<FriendList> listModel = surface.getListModel();
-//                            //将上述里面的用户信息添加到list里面
-//                            listModel.removeAllElements();
-//                            for (int i = 0; i < list.size(); i++) {
-//                                HashMap<Long, FriendList> friendUidMap = surface.getFriendUidMap();
-//                                friendUidMap.put(list.get(i).getUser().getUid(), list.get(i));//将好友放入到本地缓存当中
-//                                listModel.addElement(list.get(i));
-//
-//                            }
-//
-//                        } else {
-//                        }
-//
-//
-//                    } catch (IOException ex) {
-//                        throw new RuntimeException(ex);
-//                    } catch (ClassNotFoundException ex) {
-//                        throw new RuntimeException(ex);
-//                    }
-
                         } else if (type == MessageType.DELETEED_RESULT) {
                             System.out.println("接收到好友被删除的信息");
                             Message<User> m = new Message<>();
@@ -284,32 +251,7 @@ public class ClientThread extends Thread {
                                 throw new RuntimeException(ex);
                             }
 
-//                    try {
-//                        Message object = (Message) ObjectUtil.getObject(socket);
-//                        System.out.println(object.getType().getPath());
-//                        System.out.println("删除好友后查询的type"+object.getType());
-//                        if (object.getType() == MessageType.FRIENDSLIST_RESULT) {
-//                            List<FriendList> list = (List<FriendList>) object.getDate();
-//                            DefaultListModel<FriendList> listModel = surface.getListModel();
-//                            //将上述里面的用户信息添加到list里面
-//                            System.out.println("删除好友");
-//                            listModel.removeAllElements();
-//                            HashMap<Long, FriendList> friendUidMap = surface.getFriendUidMap();
-//                            for (int i = 0; i < list.size(); i++) {
 //
-//                                friendUidMap.put(list.get(i).getUser().getUid(), list.get(i));//将好友放入到本地缓存当中
-//                                listModel.addElement(list.get(i));
-//
-////							list.get(i).getUid()+":"+list.get(i).getNickname()
-//                            }
-//                            JOptionPane.showMessageDialog(null, object.getMes(), "好友消息", JOptionPane.PLAIN_MESSAGE);
-////                            clientThread.start();
-//                        } else {
-////                            JOptionPane.showMessageDialog(null, object.getMes()+object.getType(), "好友消息", JOptionPane.PLAIN_MESSAGE);
-//                        }
-//                    } catch (IOException | ClassNotFoundException e) {
-//                        throw new RuntimeException(e);
-//                    }
 
 
                         }else if (type==MessageType.QUERY_LIKE_USER_RESULT){
@@ -322,16 +264,7 @@ public class ClientThread extends Thread {
                             surface.setMatchingUserNicknames(matchingUserNicknames);
                             for (User user : surface.getMatchingUsers()) {
                                 matchingUserNicknames.add(user.getNickname());
-                            }
-
-
-//                    synchronized (this.surface.getUser()){
-//
-//                        System.out.println("唤醒");
-//                    }
-
-
-                            System.out.println(surface.getMatchingUsers());
+                            }System.out.println(surface.getMatchingUsers());
                         }else if(type==MessageType.ADD_FRIEND_RESULT){
                             //弹出好友添加方框
                             //这里用一个确定或者否来判断逻辑
@@ -373,35 +306,7 @@ public class ClientThread extends Thread {
                                 } catch (IOException ex) {
                                     throw new RuntimeException(ex);
                                 }
-//                        try {
-//                            Message o1 = (Message) NIOObjectUtil.readObjectFromChannel(socket);
-//                            Message object = (Message) NIOObjectUtil.readObjectFromChannel(socket);
-//                            System.out.println("已经接受到了服务器的的好友请求信息");
-//                            System.out.println(object.getType());
 //
-//                            if (object.getType() == MessageType.FRIENDSLIST_RESULT) {
-//                                List<FriendList> list = (List<FriendList>) object.getDate();
-//                                DefaultListModel<FriendList> listModel = surface.getListModel();
-//                                //将上述里面的用户信息添加到list里面
-//                                listModel.removeAllElements();
-//                                for (int i = 0; i < list.size(); i++) {
-//                                    HashMap<Long, FriendList> friendUidMap = surface.getFriendUidMap();
-//                                    friendUidMap.put(list.get(i).getUser().getUid(), list.get(i));//将好友放入到本地缓存当中
-//
-//
-//                                    listModel.addElement(list.get(i));
-//
-////							list.get(i).getUid()+":"+list.get(i).getNickname()
-//                                }
-//
-//
-////                            clientThread.start();
-//                            }  //                            JOptionPane.showMessageDialog(null, object.getMes(), "初始化", JOptionPane.PLAIN_MESSAGE);
-//
-//
-//                        } catch (IOException | ClassNotFoundException ex) {
-//                            throw new RuntimeException(ex);
-//                        }
 
                             } else if (choice == JOptionPane.NO_OPTION) {
                                 // 用户拒绝好友请求，执行拒绝操作
@@ -441,7 +346,6 @@ public class ClientThread extends Thread {
                             for (int i = 0; i < list.size(); i++) {
                                 HashMap<Long, FriendList> friendUidMap = surface.getFriendUidMap();
                                 friendUidMap.put(list.get(i).getUser().getUid(), list.get(i));
-                                System.out.println("当前的好友有:"+list.get(i).getUser().getNickname());//将好友放入到本地缓存当中
                                 listModel.addElement(list.get(i));
 //					list.get(i).getUid()+":"+list.get(i).getNickname()
                             }
@@ -466,7 +370,8 @@ public class ClientThread extends Thread {
                             for (QQGroupMessage qqGroupMessage : list) {
                                 String gContent = qqGroupMessage.getgContent();
                                 User user = qqGroupMessage.getUser();
-                                chatArea.append(user.getNickname()+":"+gContent+"\n");
+                                chatArea.append(qqGroupMessage.getgCreateTime()+"\n"+user.getNickname()+":"+gContent+"\n");
+                                chatArea.append("\n");
                             }
 
 
@@ -494,9 +399,6 @@ public class ClientThread extends Thread {
                                 } catch (IOException e) {
                                     throw new RuntimeException(e);
                                 }
-//                        GroupWindowApp groupWindowApp1 = openGroup.get(gid);
-//                        JTextArea chatArea = groupWindowApp1.getChatArea();
-//                        chatArea.append(user.getNickname()+":"+gContent+"\n");
                             }else{
                                 Message gMes = new Message<>();
                                 gMes.setData(surface.getUser());

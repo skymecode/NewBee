@@ -41,6 +41,11 @@ public class Client {
                 open.connect(new InetSocketAddress(ip, port));
             }
         }
+        //监听线程
+        ChannelThread channelThread = new ChannelThread();
+        channelThread.setDaemon(true);
+        channelThread.setSocketChannel(open);
+        channelThread.start();
         setSocket(open);
 
     }

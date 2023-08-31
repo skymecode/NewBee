@@ -36,7 +36,7 @@ public class Main {
 			@Override
 			public void run() {
 				try {
-					UIManager.setLookAndFeel(new FlatMacLightLaf());
+					UIManager.setLookAndFeel(new FlatMacDarkLaf());
 				} catch (UnsupportedLookAndFeelException e) {
 					throw new RuntimeException(e);
 				}

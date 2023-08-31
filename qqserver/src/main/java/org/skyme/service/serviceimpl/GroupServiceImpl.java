@@ -38,7 +38,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public BaseResponse queryGroup(User user, Response response) {
-//        System.out.println("获取群");
+
         List<QQGroup> groupList = qqGroupDao.selectByUid(user.getUid());
 //        List<QQGroup> groupList = SqlUtil.select(QQGroup.class, "select g.* from qq_group g left JOIN qq_group_relation u on g.gid=u.g_gid where u.g_uid=? and u.`status`=1", user.getUid());
         List<GroupList> list=new ArrayList<>();
@@ -52,7 +52,7 @@ public class GroupServiceImpl implements GroupService {
 
                     if(entry.getValue().getClass() == int.class || entry.getValue().getClass()==Integer.class || entry.getValue().getClass()==Long.class){
                         nums = (Long) entry.getValue();
-                        System.out.println("未读消息:"+nums);
+
                     }
                 }
             }
@@ -61,7 +61,7 @@ public class GroupServiceImpl implements GroupService {
             groupList1.setNums(nums);
             list.add(groupList1);
         }
-        System.out.println("群组的大小:"+list.size());
+
         Message<List<GroupList>> listMessage = new Message<>();
         listMessage.setData(list);
         listMessage.setType(MessageType.GROUP_LIST_RESULT);
@@ -93,12 +93,13 @@ public class GroupServiceImpl implements GroupService {
     public BaseResponse send(QQGroupMessage groupMessage, Response response) {
 
         User user = groupMessage.getUser();
-        System.out.println("当前发送消息的用户"+user.getNickname());
+
         String gContent = groupMessage.getgContent();
         Long gid = groupMessage.getGid();
+
         int i = SqlUtil.insertRetrunID(groupMessage);
 
-        System.out.println("生成的id"+groupMessage.getgMid());
+
         QQGroupMessageStatus qqGroupMessageStatus = new QQGroupMessageStatus();
         //拿到所有群成员
         List<User> userList = qqGroupDao.selectAllUsers(gid);
@@ -113,22 +114,23 @@ public class GroupServiceImpl implements GroupService {
             }else{
                 qqGroupMessageStatus1.setStatus(1);
             }
-            System.out.println("群成员:"+groupMember.getNickname());
-            System.out.println("id:"+groupMember.getUid());
+
             qqGroupMessageStatus1.setgMUid(groupMember.getUid());
             statusList.add(qqGroupMessageStatus1);
 
         }
-//        System.out.println("开始批量插入");
+
         SqlUtil.batchInsert(statusList);
         //拿到发的人和发的群
         Long uid = user.getUid();
         Message message = new Message();
         message.setType(MessageType.GROUP_SEND_RESULT);
+        message.setData(groupMessage);
+        message.setCode(1);
         //让所有在线的群成员都去刷新状态
         for (User user1 : userList) {
             if(response.isOnline(user1.getUid())&& !Objects.equals(user1.getUid(), user.getUid())){
-                System.out.println("发送给群成员"+user1.getNickname());
+
                 response.sendGroupMessage(user1.getUid(),message);
             }
         }
@@ -191,7 +193,7 @@ public class GroupServiceImpl implements GroupService {
                     message1.setMes("加入成功");
                 }
             }catch (IndexOutOfBoundsException e){
-                System.out.println("没有找到这个群");
+
                 e.printStackTrace();
                 //没有返回未查找到
                 message1.setData(null);

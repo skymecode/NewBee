@@ -43,7 +43,7 @@ public class ServerTask implements Runnable{
                 if(o==null){
                     return;
                 }
-                    System.out.println("进入");
+
                 MessageType type = mes.getType();
                 String path = type.getPath();
                 String path1 = path.substring(0,path.indexOf("/",1));
@@ -51,7 +51,7 @@ public class ServerTask implements Runnable{
                 //解析path->转到UserController
                 String s = servletMap.get(path1);
                 String s1 = servletToContollerMap.get(s);
-                System.out.println(s1);
+
                 Class<?> aClass = Class.forName(s1);
                 Method method1 = aClass.getMethod(method, Request.class,Response.class);
                 Object o1 = aClass.newInstance();
@@ -60,7 +60,7 @@ public class ServerTask implements Runnable{
                 BaseResponse response1 = (BaseResponse) method1.invoke(o1, request,response);//拿到响应
                 Message message = response1.getMessage();
                 NIOObjectUtil.writeObjectToChannel(message,socket);
-                System.out.println("接收数据后");
+
                 if(message!=null&&message.getType()==MessageType.LOGOUT_RESULT){
                     socket.close();
                 }

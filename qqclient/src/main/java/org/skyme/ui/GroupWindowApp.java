@@ -148,19 +148,18 @@ public class GroupWindowApp extends JFrame {
     private void sendMessage() {
         String message = inputField.getText();
         if (!message.isEmpty()) {
-            chatArea.append(user.getNickname()+":" + message + "\n");
-            inputField.setText("");
             QQGroupMessage qqGroupMessage = new QQGroupMessage();
             qqGroupMessage.setUser(user);
             qqGroupMessage.setgContent(message);
             qqGroupMessage.setGid(group.getGid());
-
             qqGroupMessage.setgCreateTime(TimeUtil.date2String(new Date()));
             Message<QQGroupMessage> sendToServer = new Message<>();
             sendToServer.setMes("发送给服务器的"+group.getGid()+"群聊消息");
             sendToServer.setCode(1);
             sendToServer.setType(MessageType.GROUP_SEND_MESSAGE);
             sendToServer.setData(qqGroupMessage);
+            chatArea.append(sendToServer.getData().getgCreateTime()+"\n"+user.getNickname()+":" + message + "\n");
+            inputField.setText("");
             try {
                 NIOObjectUtil.writeObjectToChannel(sendToServer, socket);
 //                ObjectUtil.sendObject(socket,sendToServer);
@@ -174,7 +173,6 @@ public class GroupWindowApp extends JFrame {
     private void addMember(User memberName) {
         DefaultListModel<User> model = (DefaultListModel) memberList.getModel();
         model.addElement(memberName);
-
     }
     private class GroupMemberListCellRenderer extends JPanel implements ListCellRenderer<User> {
         private JLabel nameLabel;
@@ -195,7 +193,7 @@ public class GroupWindowApp extends JFrame {
         public Component getListCellRendererComponent(JList<? extends User> list, User value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
             nameLabel.setText(value.getNickname());
-            ImageIcon avatarIcon = new ImageIcon("F:\\ikun.png");
+            ImageIcon avatarIcon = new ImageIcon("C:\\ikun.png");
             Image scaledAvatarImage = avatarIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             avatarLabel.setIcon(new ImageIcon(scaledAvatarImage));
             if(isSelected) {

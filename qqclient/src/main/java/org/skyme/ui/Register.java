@@ -77,7 +77,7 @@ public class Register extends JFrame {
 		JLabel lblNewLabel_3 = new JLabel("邮箱:");
 		lblNewLabel_3.setBounds(46, 231, 58, 15);
 		contentPane.add(lblNewLabel_3);
-		
+		setResizable(false);
 		JFormattedTextField formattedTextField = new JFormattedTextField();
 		formattedTextField.setBounds(152, 24, 193, 32);
 		contentPane.add(formattedTextField);

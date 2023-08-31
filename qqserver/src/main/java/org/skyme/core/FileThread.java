@@ -24,13 +24,17 @@ public class FileThread implements Runnable{
             String type = dataInputStream.readUTF();
             //将文件写给用户
             if("download".equals(type)){
-                //用户需要下载的文件名
                 String s = dataInputStream.readUTF();
-                //找到对应的文件
-                File file = new File("D://savaData",s);
+                File f=new File("/home/files");
+                if(!f.exists()){
+                    boolean mkdirs = f.mkdirs();//创建目录
+                }
+                File file = new File("/home/files",s);
+                System.out.println("文件下载地址"+file);
                 if(!file.exists()){
-                    //如果不存在则给默认的图片
-                    file = new File("D://savaData","default.png");
+                    System.out.println("文件目录不存在");
+                    //如果不存在则给个图片
+                    file = new File("/home/files","default.png");
                 }
                 outputStream = socket.getOutputStream();
                 dataOutputStream = new DataOutputStream(outputStream);
@@ -46,19 +50,27 @@ public class FileThread implements Runnable{
                     dataOutputStream.flush();
                 }
             }else if("upload".equals(type)){
+
                 //上传文件
+
                 DataInputStream dis = new DataInputStream(socket.getInputStream());
                 String fileName = dis.readUTF();
-//                String s = dataInputStream.readUTF();
+
                 //找到对应的文件
-                File file = new File("D://savaData",fileName);
+
+                File file = new File("/home/files",fileName);
                 if(!file.exists()){
-                    file = new File("D://savaData",fileName);
+                    file = new File("/home/files",fileName);
                 }
+
                 //读取文件的长度
                 long fileSize = dis.readLong();
                 // 创建本地文件，并写入接收到的数据
-                FileOutputStream fos = new FileOutputStream(file.getAbsoluteFile());
+                FileOutputStream fos = new FileOutputStream(file);
+
+                System.out.println("相对路径:"+ file.getPath());
+                System.out.println("绝对路径:"+ file.getAbsolutePath());
+
                 BufferedOutputStream bos = new BufferedOutputStream(fos);
                 byte[] buffer = new byte[1024];
                 int len;
@@ -70,6 +82,7 @@ public class FileThread implements Runnable{
                         break;
                     }
                 }
+                System.out.println("写入完成");
                 bos.close();
                 fos.close();
             }

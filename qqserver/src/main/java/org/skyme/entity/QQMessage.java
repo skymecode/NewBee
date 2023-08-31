@@ -28,8 +28,8 @@ public class QQMessage implements Serializable {
     private Integer status;
     @Column("send_time")
     private String sendtime;
-
-
+    @Column("file")
+    private String file;
     public Long getMid() {
         return mid;
     }
@@ -76,6 +76,14 @@ public class QQMessage implements Serializable {
 
     public void setSendtime(String sendtime) {
         this.sendtime = sendtime;
+    }
+
+    public String getFile() {
+        return file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
     }
 }
 

@@ -26,9 +26,7 @@ import java.util.concurrent.Executors;
  */
 public class Server {
     private Properties properties ;
-
     private ExecutorService fileExecutorService;
-
     private ServerSocket serverSocket; //Socket
     private ExecutorService executorService;//线程池
     private Map<Long, SocketChannel> onlineUsers;//在线表
@@ -38,14 +36,12 @@ public class Server {
     public Map<Long, SocketChannel> getOnlineUsers() {
         return onlineUsers;
     }
-
     public void setOnlineUsers(Map<Long, SocketChannel> onlineUsers) {
         this.onlineUsers = onlineUsers;
     }
-
     public  void init() throws IOException {
         fileExecutorService = Executors.newFixedThreadPool(25);
-        ServerSocket serverSocket = new ServerSocket(8888);
+        ServerSocket serverSocket = new ServerSocket(8089);
         Thread thread = new Thread(){
             @Override
             public void run() {
@@ -60,14 +56,13 @@ public class Server {
                 }
             }
         };
+
         thread.start();
-        String path="F:\\project\\QQNIO\\qqserver\\src\\main\\resources\\server.properties";
-
-        InputStream inputStream =new FileInputStream(path);
-
+        InputStream in = Server.class.getClassLoader().getResourceAsStream("server.properties");
+//
         try{
             properties=new Properties();
-            properties.load(inputStream);
+            properties.load(in);
         }catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -112,9 +107,8 @@ public class Server {
                     }else{
                         key.cancel();
                         client.close();
+                        }
                     }
-                    }
-
                 }
             selectedKeys.clear();
             }

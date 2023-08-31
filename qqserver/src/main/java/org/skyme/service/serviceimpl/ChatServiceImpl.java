@@ -39,7 +39,7 @@ public class ChatServiceImpl implements ChatService {
         QQMessage data = (QQMessage) message.getData();
         String content = data.getContent();
         Long sendUid = data.getSendUid();//接受者
-        System.out.println("服务器转发的sendid" + sendUid);
+
         Long fromUid = data.getFromUid();//发送者
         Integer status = data.getStatus();
         data.setSendtime(TimeUtil.date2String(new Date()));
@@ -71,7 +71,6 @@ public class ChatServiceImpl implements ChatService {
             if(!fromUid.equals(qqMessage.getFromUid())){
             qqMessage.setStatus(1);
             int i=qqMessageDao.update(qqMessage);
-
             }
         }
         List<User> selects = userDao.queryFriends(fromUid);
@@ -82,7 +81,6 @@ public class ChatServiceImpl implements ChatService {
         for (User user : selects) {
             //拿到好友的ID
             Long friendUid = user.getUid();
-            System.out.println("当前好友ID"+friendUid);
             //根据我的ID和好友的ID去查询未读消息的数量
             List<Map<String, Object>> select1 = SqlUtil.select("select count(*) from qq_message WHERE from_uid=? AND send_uid=? AND `status`=0 ", friendUid,fromUid);
             Long nums = 0L;
@@ -91,7 +89,7 @@ public class ChatServiceImpl implements ChatService {
                 for (Map.Entry<String, Object> entry : entries) {
                     if (entry.getValue().getClass() == int.class || entry.getValue().getClass() == Integer.class || entry.getValue().getClass() == Long.class) {
                         nums = (Long) entry.getValue();
-                        System.out.println("未读消息:" + nums);
+
                     }
                 }
             }
@@ -114,7 +112,13 @@ public class ChatServiceImpl implements ChatService {
             mes.setMes("获取历史消息成功");
             mes.setCode(1);
             mes.setData(history);
-            return new BaseResponse(mes);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return new BaseResponse(mes);
 
         }
     }

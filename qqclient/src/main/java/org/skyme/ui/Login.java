@@ -10,6 +10,7 @@ import org.skyme.util.NIOObjectUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -55,7 +56,7 @@ public class Login extends JFrame {
 	 * Create the frame.
 	 */
 	public Login() {
-
+		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
@@ -63,12 +64,18 @@ public class Login extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		this.setLocationRelativeTo(null);
-		setTitle("Skyme-登录");
+		setTitle("NewBee");
+		JLabel logo=new JLabel();
+		logo.setBounds(175,5,80,60);
+		ImageIcon defaultIcon = new ImageIcon("C:\\ikun.png");
+		Image scaledImage = defaultIcon.getImage().getScaledInstance(80, 50, Image.SCALE_SMOOTH);
+		logo.setIcon(new ImageIcon(scaledImage));
+		contentPane.add(logo);
 		JLabel lblNewLabel = new JLabel("用户名:");
-		lblNewLabel.setBounds(44, 69, 58, 15);
+		lblNewLabel.setBounds(44, 60, 58, 20);
 		contentPane.add(lblNewLabel);
 		JLabel lblNewLabel_1 = new JLabel("密码:");
-		lblNewLabel_1.setBounds(44, 141, 58, 15);
+		lblNewLabel_1.setBounds(44, 141, 58, 20);
 		contentPane.add(lblNewLabel_1);
 		JButton btnNewButton = new JButton("登录");
 		btnNewButton.setBounds(89, 202, 97, 23);
@@ -120,15 +127,9 @@ public class Login extends JFrame {
 				try {
 					NIOObjectUtil.writeObjectToChannel(message, Login.this.socket);
 					clientThread.setLogin(Login.this);
-//					Message o = (Message) NIOObjectUtil.readObjectFromChannel(socket);
-
-//					ObjectUtil.sendObject(socket,message);
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
-//				 catch (ClassNotFoundException ex) {
-//					throw new RuntimeException(ex);
-//				}
 			}
 		});
 		btnNewButton_1.setBounds(251, 202, 97, 23);

@@ -15,7 +15,7 @@ public class QQMessageDaoImpl implements QQMessageDao {
     @Override
     public List<QQMessage> select(Long sendUid, Long fromUid, Long fromUid1, Long sendUid1) {
 
-                 List<QQMessage> select = SqlUtil.select(QQMessage.class, "SELECT * from (SELECT * FROM `qq_message` WHERE (send_uid=? and from_uid=?) or (send_uid=? AND from_uid=?) ORDER BY send_time DESC LIMIT 10) AS  s  ORDER BY s.mid asc", sendUid, fromUid, fromUid, sendUid);
+                 List<QQMessage> select = SqlUtil.select(QQMessage.class, "SELECT * from (SELECT * FROM `qq_message` WHERE (send_uid=? and from_uid=?) or (send_uid=? AND from_uid=?) ORDER BY send_time DESC LIMIT 4) AS  s  ORDER BY s.mid asc", sendUid, fromUid, fromUid, sendUid);
                  return  select;
     }
 

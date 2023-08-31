@@ -15,7 +15,6 @@ import java.io.Serializable;
  */
 @Table("qq_user")
 public class User implements Serializable {
-    private static final long serialVersionUID = -35737123535164608L;
 
 
     @Id

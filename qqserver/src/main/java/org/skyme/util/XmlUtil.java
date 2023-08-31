@@ -5,8 +5,10 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
+import org.skyme.core.Server;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,8 +23,9 @@ public class XmlUtil {
 
     static {
         try {
-            File file = new File("F:\\project\\QQ\\qqserver\\src\\main\\resources\\web.xml");
-            document = saxReader.read(file);
+            InputStream in = XmlUtil.class.getClassLoader().getResourceAsStream("web.xml");
+//            File file = new File("F:\\project\\QQ\\qqserver\\src\\main\\resources\\web.xml");
+            document = saxReader.read(in);
         } catch (DocumentException e) {
             throw new RuntimeException(e);
         }

@@ -16,8 +16,14 @@ import java.util.Map;
 public class UserDaoImpl implements UserDao {
     @Override
     public int insert(User user) {
-        int insert = SqlUtil.insert(user);
-        return insert;
+        try {
+            int insert = SqlUtil.insert(user);
+            return insert;
+        }catch (Exception e){
+            return 0;
+        }
+
+
     }
 
     @Override
@@ -28,8 +34,14 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User queryUserByUsername(String username) {
-        User user = SqlUtil.selectOne(User.class, "select * from qq_user where username=?", username);
-        return user;
+        try {
+            User user = SqlUtil.selectOne(User.class, "select * from qq_user where username=?", username);
+            return user;
+        }catch (IndexOutOfBoundsException e){
+            return null;
+        }
+
+
     }
 
     @Override
