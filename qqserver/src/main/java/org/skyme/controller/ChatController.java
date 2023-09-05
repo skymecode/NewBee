@@ -24,5 +24,11 @@ public class ChatController {
         return chatService.friendHistory(data,response);
     }
 
+    public BaseResponse historyFriend(Request request,Response response){
+        Message message=request.getMessage();
+        QQMessage data = (QQMessage) message.getData();
+        return chatService.historyFriend(data,response);
+    }
+
 
 }

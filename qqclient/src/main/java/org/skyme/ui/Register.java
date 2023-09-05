@@ -9,6 +9,7 @@ import org.skyme.util.NIOObjectUtil;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -58,7 +59,7 @@ public class Register extends JFrame {
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		this.setLocationRelativeTo(null);
-		setTitle("Skyme-注册");
+		setTitle("NewBee-注册");
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
@@ -101,7 +102,67 @@ public class Register extends JFrame {
 		JButton btnNewButton_1 = new JButton("返回登录");
 		btnNewButton_1.setBounds(171, 382, 97, 23);
 		contentPane.add(btnNewButton_1);
+		// 在输入框下添加提示信息的标签
+		JLabel usernameHintLabel = new JLabel("");
+		usernameHintLabel.setBounds(152, 57, 300, 15);
+		contentPane.add(usernameHintLabel);
 
+		JLabel nicknameHintLabel = new JLabel("");
+		nicknameHintLabel.setBounds(152, 116, 300, 15);
+		contentPane.add(nicknameHintLabel);
+
+		JLabel passwordHintLabel = new JLabel("");
+		passwordHintLabel.setBounds(152, 188, 300, 15);
+		contentPane.add(passwordHintLabel);
+
+		JLabel emailHintLabel = new JLabel("");
+		emailHintLabel.setBounds(152, 256, 300, 15);
+		contentPane.add(emailHintLabel);
+		formattedTextField.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				usernameHintLabel.setText("请输入3-20位字母、数字或下划线");
+				usernameHintLabel.setForeground(Color.RED);
+			}
+			@Override
+			public void mouseExited(MouseEvent e) {
+				usernameHintLabel.setText("");
+			}
+		});
+		formattedTextField_1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				nicknameHintLabel.setText("请输入昵称");
+				nicknameHintLabel.setForeground(Color.RED);
+			}
+			@Override
+			public void mouseExited(MouseEvent e) {
+				nicknameHintLabel.setText("");
+			}
+		});
+		passwordField.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered( MouseEvent e) {
+				passwordHintLabel.setText("请输入6-18位字母且包含大小写和数字组合");
+				passwordHintLabel.setForeground(Color.RED);
+			}
+			@Override
+			public void mouseExited(MouseEvent e) {
+				passwordHintLabel.setText("");
+			}
+		});
+		formattedTextField_3.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				emailHintLabel.setText("请输入有效的邮箱地址");
+				emailHintLabel.setForeground(Color.RED);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				emailHintLabel.setText("");
+			}
+		});
 		btnNewButton_1.addMouseListener(new MouseAdapter() {
 											@Override
 											public void mouseClicked(MouseEvent e) {
@@ -117,17 +178,19 @@ public class Register extends JFrame {
 				Main.getRegister().setVisible(false);
 				Main.getLogin().setVisible(true);
 				String username = formattedTextField.getText();
+				String email = formattedTextField_3.getText();
+				String password = passwordField.getText();
 				if(!username.matches("^[a-zA-Z0-9_]{3,20}$")){
 					JOptionPane.showConfirmDialog(null,"用户名不合法","警告",DEFAULT_OPTION,INFORMATION_MESSAGE);
 
 				}else{
 					String nickname = formattedTextField_1.getText();
-					String password = passwordField.getText();
+
 					if(!password.matches("^(?=.*[0-9])(?=.*[a-zA-Z])[a-zA-Z0-9]{6,18}$")){
 						JOptionPane.showConfirmDialog(null,"密码不合法","警告",DEFAULT_OPTION,INFORMATION_MESSAGE);
-
-					}else{
-						String email = formattedTextField_3.getText();
+					}else if(!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")) {
+						JOptionPane.showConfirmDialog(null, "邮箱不合法", "警告", DEFAULT_OPTION, INFORMATION_MESSAGE);
+					}else {
 						MessageType reg = MessageType.REG;//设置消息路径
 						User user = new User();
 						user.setUsername(username);

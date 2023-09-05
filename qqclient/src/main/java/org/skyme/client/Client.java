@@ -1,5 +1,6 @@
 package org.skyme.client;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -32,11 +33,12 @@ public class Client {
         try {
            connect= open.connect(new InetSocketAddress(ip, port));
         }catch (Exception e){
-            System.out.println("连接服务器失败");
+            JOptionPane.showMessageDialog(null,"连接服务器失败");
             return;
         }
         
         if(!connect){
+            JOptionPane.showMessageDialog(null,"正在尝试连接服务器");
             while (open.finishConnect()){
                 open.connect(new InetSocketAddress(ip, port));
             }

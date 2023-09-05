@@ -41,7 +41,19 @@ public class Server {
     }
     public  void init() throws IOException {
         fileExecutorService = Executors.newFixedThreadPool(25);
-        ServerSocket serverSocket = new ServerSocket(8089);
+        InputStream in = Server.class.getClassLoader().getResourceAsStream("server.properties");
+//
+        try{
+            properties=new Properties();
+            properties.load(in);
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String property = properties.getProperty("port");
+        int port = Integer.parseInt(property);
+        String filePort = properties.getProperty("filePort");
+        int filePort1= Integer.parseInt(filePort);
+        ServerSocket serverSocket = new ServerSocket(filePort1);
         Thread thread = new Thread(){
             @Override
             public void run() {
@@ -58,16 +70,7 @@ public class Server {
         };
 
         thread.start();
-        InputStream in = Server.class.getClassLoader().getResourceAsStream("server.properties");
-//
-        try{
-            properties=new Properties();
-            properties.load(in);
-        }catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        String property = properties.getProperty("port");
-        int port = Integer.parseInt(property);
+
 
         onlineUsers=new ConcurrentHashMap<>();
         executorService= Executors.newFixedThreadPool(25);

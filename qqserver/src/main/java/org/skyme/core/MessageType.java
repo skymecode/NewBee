@@ -77,6 +77,17 @@ public enum MessageType implements Serializable {
     QUERY_GROUP_MEMBER("/group/queryMembers"),
     QUERY_GROUP_MEMBER_RESULT(""),
 
+    HISTORY_FRIEND_MESSAGE("/chat/historyFriend"),//获取历史消息
+    HISTORY_FRIEND_MESSAGE_RESULT("historyFriendResult"),
+
+    FORGET_PASSWORD("/user/forgetPassword"),
+    FORGET_PASSWORD_RESULT(""),
+
+    CHANGE_PASSWORD("/user/changePassword"),
+    CHANGE_PASSOWRD_RESULT(""),
+
+    CODE("/user/code"),
+    CODE_RESULT(""),
     NORMAL_RESULT(""), QUIT_GROUP("/group/quitGroup"),QUIT_GROUP_RESULT("quit_group_result");
 
 

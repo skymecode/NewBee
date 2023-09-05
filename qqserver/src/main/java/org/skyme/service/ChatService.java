@@ -9,4 +9,6 @@ public interface ChatService {
     BaseResponse sendToFriend(Request request, Response response);
 
     BaseResponse friendHistory(QQMessage qqMessage, Response response);
+
+    BaseResponse historyFriend(QQMessage data, Response response);
 }

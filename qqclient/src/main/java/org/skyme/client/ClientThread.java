@@ -37,10 +37,22 @@ public class ClientThread extends Thread {
 
     private InfoWindowApp infoWindowApp;
 
+
+
     private Selector selector;
 
     private SocketChannel socket;
     private ChatWindowApp chatWindowApp;
+
+    private HistoryMessageWindow historyMessageWindow;
+
+    public HistoryMessageWindow getHistoryMessageWindow() {
+        return historyMessageWindow;
+    }
+
+    public void setHistoryMessageWindow(HistoryMessageWindow historyMessageWindow) {
+        this.historyMessageWindow = historyMessageWindow;
+    }
 
     public Surface getSurface() {
         return surface;
@@ -90,8 +102,9 @@ public class ClientThread extends Thread {
         try {
             socket.configureBlocking(false);
             selector = Selector.open();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,"连接服务器异常");
+            System.exit(0);
         }
         try {
 
@@ -139,7 +152,6 @@ public class ClientThread extends Thread {
                         if (type == MessageType.RECEIVE_RESULT) {
                             QQMessage date = (QQMessage) message.getData();
                             String content = date.getContent();
-
                             //根据接收到数据进行加入
                             ChatWindowApp chatWindowApp1 = map.getOrDefault(date.getFromUid(), null);
                             if (chatWindowApp1 == null) {
@@ -172,48 +184,30 @@ public class ClientThread extends Thread {
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
-                            JTextArea chatTextArea = chatWindowApp1.getChatTextArea();
-                            System.out.println("chatWindowApp:" + chatWindowApp1);
-                            if (!content.isEmpty()) {
-                                chatTextArea.append(chatWindowApp1.getFirstUser().getNickname() + ": " + content + "\n");
-                            }
-                        } else if (type == MessageType.MES_HISTORY_RESULT) {
+//                            JTextArea chatTextArea = chatWindowApp1.getChatTextArea();
+                            System.out.println("chatWindowApp:更新消息" );
+
+                        }
+                        else if(type==MessageType.SEND_RESULT){
+                            List<QQMessage> history = (List<QQMessage>) message.getData();
+                            chatWindowApp.paintMessageList(history);
+
+                        }else if (type == MessageType.MES_HISTORY_RESULT) {
                             FriendHistory history = (FriendHistory) message.getData();
                             ChatWindowApp chatWindowApp1 = map.get(history.getSendId());
                             List<QQMessage> list = history.getList();
-                            JTextArea chatTextArea = chatWindowApp1.getChatTextArea();
-                            chatTextArea.setText("");
-                            for (int i = 0; i < list.size(); i++) {
-                                if (list.get(i).getFromUid().equals(chatWindowApp1.getUser().getUid())) {
-                                    if(list.get(i).getFile()!=null){
-                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getUser().getNickname() + ": " + list.get(i).getFile()+ "\n");
-                                        chatTextArea.append("\n");
-                                    }else{
-                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getUser().getNickname() + ": " + list.get(i).getContent() + "\n");
-                                        chatTextArea.append("\n");
-                                    }
-
-                                } else {
-                                    if(list.get(i).getFile()!=null){
-                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getFirstUser().getNickname() + ": " + list.get(i).getFile()+ "\n");
-                                        chatTextArea.append("\n");
-                                    }else{
-                                        chatTextArea.append(list.get(i).getSendtime()+"\n"+chatWindowApp1.getFirstUser().getNickname()+ ": " + list.get(i).getContent() + "\n");
-                                        chatTextArea.append("\n");
-                                    }
-                                }
-                            }
+                            chatWindowApp1.paintMessageList(list);
                         }else if(type==MessageType.GROUP_LIST_RESULT){
                             List<GroupList> list = (List<GroupList>) message.getData();
                             //将上述里面的用户信息添加到list里面
-                            HashMap<Long, GroupList> groupUidMap = surface.getGroupUidMap();
-                            DefaultListModel<GroupList> groupModel = surface.getGroupModel();
-                            groupModel.removeAllElements();
-                            for (int i = 0; i < list.size(); i++) {
-                                groupUidMap.put(list.get(i).getGroup().getGid(),list.get(i));//将好友放入到本地缓存当中
-                                groupModel.addElement(list.get(i));
-//
-                            }
+                            surface.paintGroupList(list);
+//                            HashMap<Long, GroupList> groupUidMap = surface.getGroupUidMap();
+//                            DefaultListModel<GroupList> groupModel = surface.getGroupModel();
+//                            groupModel.removeAllElements();
+//                            for (int i = 0; i < list.size(); i++) {
+//                                groupUidMap.put(list.get(i).getGroup().getGid(),list.get(i));//将好友放入到本地缓存当中
+//                                groupModel.addElement(list.get(i));
+//                            }
 //
 //
                         }
@@ -340,17 +334,23 @@ public class ClientThread extends Thread {
                             }
                         }else if(type==MessageType.FRIENDSLIST_RESULT){
                             List<FriendList> list = (List<FriendList>) message.getData();
-                            DefaultListModel<FriendList> listModel = surface.getListModel();
-                            //将上述里面的用户信息添加到list里面
-                            listModel.removeAllElements();
-                            for (int i = 0; i < list.size(); i++) {
-                                HashMap<Long, FriendList> friendUidMap = surface.getFriendUidMap();
-                                friendUidMap.put(list.get(i).getUser().getUid(), list.get(i));
-                                listModel.addElement(list.get(i));
-//					list.get(i).getUid()+":"+list.get(i).getNickname()
-                            }
+                            getSurface().paintFriendList(list);
 
-                        }else if (type==MessageType.GROUP_MESSAGE_HISTORY_RESULT){
+                        }else if(type==MessageType.DELETE_FRIEND_RESULT){
+                            Message m = new Message<>();
+                            m.setData(surface.getUser());
+                            m.setCode(1);
+                            m.setMes("请求查询好友列表");
+                            m.setType(MessageType.FRIENDS_LIST);
+                            try {
+                                System.out.println("向服务器发送因为好友请求而刷新好友列表的消息");
+                                NIOObjectUtil.writeObjectToChannel(m,socket);
+//                        ObjectUtil.sendObject(socket, m);
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                        else if (type==MessageType.GROUP_MESSAGE_HISTORY_RESULT){
                             List<QQGroupMessage> list= (List<QQGroupMessage>) message.getData();
                             //顺带将
                             Message groupMessage = new Message<>();
@@ -375,7 +375,8 @@ public class ClientThread extends Thread {
                             }
 
 
-                        }else if(type==MessageType.GROUP_SEND_RESULT){
+                        }
+                       else if(type==MessageType.GROUP_SEND_RESULT){
                             //刷新自己的群列表或对话框->
                             //如果这个群的窗口打开了,那么直接就刷新到群对话框中,否则刷新群消息列表
                             QQGroupMessage groupMessage = (QQGroupMessage) message.getData();
@@ -451,6 +452,16 @@ public class ClientThread extends Thread {
                             }
                         }else if(type==MessageType.QUIT_GROUP_RESULT){
                             JOptionPane.showMessageDialog(null, message.getMes(), "消息", JOptionPane.INFORMATION_MESSAGE);
+                            Message groupMessage = new Message<>();
+                            groupMessage.setData(surface.getUser());
+                            groupMessage.setCode(1);
+                            groupMessage.setMes("请求查询群聊列表");
+                            groupMessage.setType(MessageType.GROUP_LIST);
+                            try {
+                                NIOObjectUtil.writeObjectToChannel(groupMessage,socket);
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
                         } else if (type==MessageType.LOGOUT_RESULT) {
                             if(message .getCode()==1){
                                 JOptionPane.showConfirmDialog(null,message .getMes(),"消息提示",DEFAULT_OPTION,INFORMATION_MESSAGE);
@@ -497,6 +508,46 @@ public class ClientThread extends Thread {
                             for (User user : list) {
                                 model.addElement(user);
                             }
+                        }else if(type==MessageType.HISTORY_FRIEND_MESSAGE_RESULT){
+                            int code = message.getCode();
+                            if(code==1){
+                                List<QQMessage>  list= (List<QQMessage>) message.getData();
+                                HistoryMessageWindow historyMessageWindow1 = getHistoryMessageWindow();
+                                JTextArea historyTextArea = historyMessageWindow1.getHistoryTextArea();
+                                historyTextArea.setText("");
+                                for (int i = 0; i < list.size(); i++) {
+                                    if (list.get(i).getFromUid().equals(historyMessageWindow1.getLocal().getUid())) {
+                                        if(list.get(i).getFile()!=null){
+                                            historyTextArea.append(list.get(i).getSendtime()+"\n"+historyMessageWindow1.getLocal().getNickname() + ": " + list.get(i).getFile()+ "\n");
+                                            historyTextArea.append("\n");
+                                        }else{
+                                            historyTextArea.append(list.get(i).getSendtime()+"\n"+historyMessageWindow1.getLocal().getNickname() + ": " + list.get(i).getContent() + "\n");
+                                            historyTextArea.append("\n");
+                                        }
+                                    } else {
+                                        if(list.get(i).getFile()!=null){
+                                            historyTextArea.append(list.get(i).getSendtime()+"\n"+historyMessageWindow1.getGuest().getNickname() + ": " + list.get(i).getFile()+ "\n");
+                                            historyTextArea.append("\n");
+                                        }else{
+                                            historyTextArea.append(list.get(i).getSendtime()+"\n"+historyMessageWindow1.getGuest().getNickname()+ ": " + list.get(i).getContent() + "\n");
+                                            historyTextArea.append("\n");
+                                        }
+                                    }
+                                }
+                            }
+                        }else if(type==MessageType.CHANGE_PASSOWRD_RESULT){
+                            JOptionPane.showMessageDialog(null,message.getMes());
+                        }else if(type==MessageType.FORGET_PASSWORD_RESULT){
+                            JOptionPane.showMessageDialog(null,message.getMes());
+                        }else  if(type==MessageType.CODE_RESULT){
+                           if(message.getCode()==1){
+                               String data = (String) message.getData();
+                               getLogin().setCode(data);
+                               JOptionPane.showMessageDialog(null,"获取成功,请查看邮箱");
+                           }else{
+                               JOptionPane.showMessageDialog(null, "验证码获取失败");
+                           }
+
                         }
                     } catch (Exception e) {
                         throw new RuntimeException(e);

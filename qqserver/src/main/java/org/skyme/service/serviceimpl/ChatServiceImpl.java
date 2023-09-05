@@ -56,9 +56,12 @@ public class ChatServiceImpl implements ChatService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        message.setType(MessageType.SEND_RESULT);
-        return new BaseResponse(message);
+        List<QQMessage> select = qqMessageDao.select(sendUid, fromUid, fromUid, sendUid);
+        Message message1 = new Message();
+        message1.setCode(1);
+        message1.setType(MessageType.SEND_RESULT);
+        message1.setData(select);
+        return new BaseResponse(message1);
     }
 
     @Override
@@ -119,7 +122,19 @@ public class ChatServiceImpl implements ChatService {
             throw new RuntimeException(e);
         }
         return new BaseResponse(mes);
-
         }
+
+    @Override
+    public BaseResponse historyFriend(QQMessage data, Response response) {
+        Long fromUid = data.getFromUid();//发送者
+        Long sendUid = data.getSendUid();//接收者
+        List<QQMessage> select = qqMessageDao.selectAll(sendUid, fromUid, fromUid, sendUid);
+        Message message = new Message();
+        message.setData(select);
+        message.setType(MessageType.HISTORY_FRIEND_MESSAGE_RESULT);
+        message.setCode(1);
+        message.setMes("历史消息查询成功");
+        return new BaseResponse(message);
     }
+}
 

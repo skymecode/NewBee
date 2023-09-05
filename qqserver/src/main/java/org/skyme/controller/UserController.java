@@ -4,6 +4,9 @@ import org.skyme.core.Message;
 import org.skyme.core.Request;
 import org.skyme.core.Response;
 import org.skyme.dto.AddFriend;
+import org.skyme.dto.ChangePassWord;
+import org.skyme.dto.CodeDto;
+import org.skyme.dto.Forget;
 import org.skyme.entity.QQRelation;
 import org.skyme.entity.User;
 import org.skyme.service.UserService;
@@ -42,6 +45,12 @@ private UserService userService=new UserServiceImpl();
         Long uid = (Long) message.getData();
         return userService.logout(uid,response);
     }
+    public BaseResponse forgetPassword(Request request, Response response){
+        Message message = request.getMessage();
+        Forget data = (Forget) message.getData();
+        return userService.forgetPassword(data);
+    }
+
 
 
     public BaseResponse deleteFriend(Request request,Response response) throws IOException {
@@ -81,5 +90,21 @@ private UserService userService=new UserServiceImpl();
         User user = message.getData();
         return userService.modNickname(user, response);
     }
+    public BaseResponse changePassword(Request request,Response response){
+        System.out.println("接收到数据");
+        Message<ChangePassWord> message = request.getMessage();
+        ChangePassWord data = message.getData();
+
+        return userService.changePassword(data , response);
+    }
+    public BaseResponse code(Request request,Response response){
+        System.out.println("用户获取验证码");
+        Message<CodeDto> message = request.getMessage();
+        CodeDto data = message.getData();
+
+        return userService.code(data , response);
+    }
+
+
 
 }

@@ -3,6 +3,9 @@ package org.skyme.service;
 import org.skyme.core.Request;
 import org.skyme.core.Response;
 import org.skyme.dto.AddFriend;
+import org.skyme.dto.ChangePassWord;
+import org.skyme.dto.CodeDto;
+import org.skyme.dto.Forget;
 import org.skyme.entity.QQRelation;
 import org.skyme.vo.BaseResponse;
 import org.skyme.entity.User;
@@ -31,4 +34,10 @@ public interface UserService {
     BaseResponse queryInfo(User user, Response response);
 
     BaseResponse modNickname(User user, Response response);
+
+    BaseResponse forgetPassword(Forget data);
+
+    BaseResponse changePassword(ChangePassWord data, Response response);
+
+    BaseResponse code(CodeDto data, Response response);
 }

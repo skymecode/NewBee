@@ -1,5 +1,7 @@
 package org.skyme.ui;
 
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.skyme.client.ClientThread;
 import org.skyme.core.Message;
 import org.skyme.core.MessageType;
@@ -8,12 +10,9 @@ import org.skyme.entity.QQGroup;
 import org.skyme.entity.QQMessage;
 import org.skyme.entity.QQRelation;
 import org.skyme.entity.User;
-import org.skyme.ui.reconnect.Reconnect;
 import org.skyme.util.NIOObjectUtil;
-
 import org.skyme.vo.FriendList;
 import org.skyme.vo.GroupList;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -21,10 +20,8 @@ import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.List;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
 /**
  * @author Skyme
  */
@@ -42,8 +39,6 @@ public class Surface extends JFrame {
 
 	//存放chatwindowsapp,不管哪个线程拿到数据都会先去找map里面对应的聊天框对象
 	private   HashMap<Long,ChatWindowApp> map=new HashMap<>();
-
-
 
 	private HashMap<Long,FriendList> friendUidMap=new HashMap<>();
 
@@ -69,8 +64,11 @@ public class Surface extends JFrame {
 	List<User> matchingUsers;
 
 	private InfoWindowApp infoWindowApp;
+	private List<FriendList> friends;
 
 	private JList<FriendList> friendList;
+
+	private List<GroupList> groups;
 	private  JList<GroupList> groupList;
 	List<String> matchingUserNicknames ;
 
@@ -98,12 +96,6 @@ public class Surface extends JFrame {
 
 		this.matchingUsers = matchingUsers;
 
-	}
-	public JList<FriendList> getFriendList() {
-		return friendList;
-	}
-	public void setFriendList(JList<FriendList> friendList) {
-		this.friendList = friendList;
 	}
 	public JList<GroupList> getGroupList() {
 		return groupList;
@@ -198,18 +190,20 @@ public class Surface extends JFrame {
 		lblNewLabel.setBounds(69, 32, 56, 33);
 		contentPane.add(lblNewLabel);
 		groupModel=new DefaultListModel<>();
-		groupList= new JList<GroupList>(groupModel);
+		groupList= new JList<>();
 		groupList.setCellRenderer(new GroupListCellRenderer());
 		JScrollPane scrollPane2 = new JScrollPane(groupList);
 		scrollPane2.setBounds(10, 150, 256, 550);
 		contentPane.add(scrollPane2);
 		scrollPane2.setVisible(false);
 		listModel = new DefaultListModel<>();
-		friendList= new JList<FriendList>(listModel);
+//		friendList= new JList<FriendList>(listModel);
+		friendList=new JList<>();
 		friendList.setCellRenderer(new FriendListCellRenderer());
 		JScrollPane scrollPane = new JScrollPane(friendList);
 		scrollPane.setBounds(10, 150, 256, 550);
 		contentPane.add(scrollPane);
+		setTaskbarIcon(this);
 		JLabel lblNewLabel_1 = new JLabel(loggedInUser.getNickname());
 		lblNewLabel_1.setBounds(117, 36, 56, 24);
 		contentPane.add(lblNewLabel_1);
@@ -258,7 +252,7 @@ public class Surface extends JFrame {
 		});
 		friendRadioButton.setBounds(120, 80, 80, 25);
 		groupChatRadioButton.setBounds(200, 80, 80, 25);
-		JButton addGroupButton = new JButton("添加/创建群聊");
+		JButton addGroupButton = new JButton("添/创群聊");
 		addGroupButton.setBounds(10, 110, 100, 25);
 		contentPane.add(addGroupButton);
 		JButton infoButton = new JButton("消息通知");
@@ -283,7 +277,7 @@ public class Surface extends JFrame {
 					// 创建Socket对象，指定IP地址和端口号
 					Socket fileSocket = null;
 					try {
-						fileSocket  = new Socket("192.168.0.33", 8089);
+						fileSocket  = new Socket("127.0.0.1", 8089);
 					} catch (IOException ex) {
 						throw new RuntimeException(ex);
 					}
@@ -360,7 +354,7 @@ public class Surface extends JFrame {
 						throw new RuntimeException(ex);
 					}
 					try {
-						Thread.sleep(1000);
+						Thread.sleep(100);
 					} catch (InterruptedException ex) {
 						throw new RuntimeException(ex);
 					}
@@ -411,7 +405,7 @@ public class Surface extends JFrame {
 				// 创建Socket对象，指定IP地址和端口号
 				Socket fileSocket = null;
 				try {
-					fileSocket  = new Socket("192.168.0.33", 8089);
+					fileSocket  = new Socket("127.0.0.1", 8089);
 				} catch (IOException ex) {
 					throw new RuntimeException(ex);
 				}
@@ -491,7 +485,7 @@ public class Surface extends JFrame {
 					throw new RuntimeException(ex);
 				}
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(100);
 				} catch (InterruptedException ex) {
 					throw new RuntimeException(ex);
 				}
@@ -545,17 +539,16 @@ public class Surface extends JFrame {
 					System.out.println("进入双击事件");
 					System.out.println("index:"+index);
                     if (index >= 0) {
-
-							System.out.println(1);
-							openGroupChatWindow(groupModel.getElementAt(index).getGroup());
+//							System.out.println(1);
+						openGroupChatWindow(groups.get(index).getGroup());
 //						listModel.getElementAt(index).substring(0,listModel.getElementAt(index).indexOf(":"))))
-
-					}else{
-
-							System.out.println(2);
-
-
 					}
+//					}else{
+//
+//							System.out.println(2);
+//
+//
+//					}
 					//向服务器发送已经读取消息的通知
 					//
                 }
@@ -570,10 +563,9 @@ public class Surface extends JFrame {
 					int index = friendList.locationToIndex(e.getPoint());
 					if (index >= 0) {
 						if(isShowing()){
-							openChatWindow(friendUidMap.get(listModel.getElementAt(index).getUser().getUid()).getUser());
+							openChatWindow(friends.get(index).getUser());
+//							openChatWindow(friendUidMap.get(listModel.getElementAt(index).getUser().getUid()).getUser());
 //						listModel.getElementAt(index).substring(0,listModel.getElementAt(index).indexOf(":"))))
-						}else{
-							openGroupChatWindow(groupModel.getElementAt(index).getGroup());
 						}
 					}
 				}
@@ -587,7 +579,8 @@ public class Surface extends JFrame {
 
 				int selectedIndex = groupList.getSelectedIndex();
 				if (selectedIndex != -1) {
-					GroupList selectedGroup = groupModel.getElementAt(selectedIndex);
+					GroupList selectedGroup  = groups.get(selectedIndex);
+//					GroupList selectedGroup = groupModel.getElementAt(selectedIndex);
 
 					int confirm = JOptionPane.showConfirmDialog(
 							contentPane,
@@ -598,8 +591,9 @@ public class Surface extends JFrame {
 					if (confirm == JOptionPane.YES_OPTION) {
 						// 在这里执行退出群聊的操作
 						// 在这里向服务器发退出群聊的请求，更新数据库
-						groupModel.remove(selectedIndex);
-						groupUidMap.remove(selectedGroup.getGroup().getGid());
+						friends.remove(selectedIndex);
+//						groupModel.remove(selectedIndex);
+//						groupUidMap.remove(selectedGroup.getGroup().getGid());
 						Message<RemoveGroup> delete  = new Message<>();
 						delete.setCode(1);
 						delete.setType(MessageType.QUIT_GROUP);
@@ -629,7 +623,8 @@ public class Surface extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				int selectedIndex = friendList.getSelectedIndex();
 				if (selectedIndex != -1) {
-					FriendList selectedUser = listModel.getElementAt(selectedIndex);
+					FriendList selectedUser = friends.get(selectedIndex);
+//					FriendList selectedUser = listModel.getElementAt(selectedIndex);
 
 					int confirm = JOptionPane.showConfirmDialog(
 							contentPane,
@@ -640,8 +635,6 @@ public class Surface extends JFrame {
 					if (confirm == JOptionPane.YES_OPTION) {
 						// 在这里执行删除好友的操作
 						// 在这里向服务器发送删除好友的请求，更新数据库
-						listModel.remove(selectedIndex);
-						friendUidMap.remove(selectedUser.getUser().getUid());
 						Message<QQRelation> delete  = new Message<>();
 						delete.setCode(1);
 						delete.setType(MessageType.DELETE_FRIEND);
@@ -715,7 +708,6 @@ public class Surface extends JFrame {
 		public GroupListCellRenderer() {
 			setOpaque(true);
 			setBorder(new EmptyBorder(5, 5, 5, 5));
-
 			// 使用默认头像图标
 			defaultIcon = new ImageIcon("C:\\ikun.png");
 		}
@@ -798,6 +790,7 @@ public class Surface extends JFrame {
         }
 
 
+
 	}
 	 private void openChatWindow(User user) {
 	        // 在此处添加打开聊天窗口的逻辑
@@ -805,7 +798,7 @@ public class Surface extends JFrame {
 	        SwingUtilities.invokeLater(() -> {
 				System.out.println("点开聊天框对象是:"+user.getUid());
 				//对好友生成聊天窗口
-	            ChatWindowApp chatWindow = new ChatWindowApp(socket,user.getNickname(),user,this.user,this);
+	            ChatWindowApp chatWindow = new ChatWindowApp(socket,user.getNickname(),user,this.user,this,clientThread);
 				map.put(user.getUid(),chatWindow);
 				//历史消息查询
 				Message message = new Message<>();
@@ -924,9 +917,6 @@ public class Surface extends JFrame {
 						} catch (IOException ex) {
 							throw new RuntimeException(ex);
 						}
-						// 在这里执行加入群聊的逻辑
-//						System.out.println("加入群聊: " + groupName);
-
 					} else {
 						JOptionPane.showMessageDialog(
 								CreateGroupChatDialog.this,
@@ -936,7 +926,6 @@ public class Surface extends JFrame {
 					}
 				}
 			});
-
 			cancelButton.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
@@ -948,5 +937,79 @@ public class Surface extends JFrame {
 			setLocationRelativeTo(parent);
 		}
 }
+	public void paintFriendList (List<FriendList> userList){
+		friends = userList;
+		ListModel<FriendList> model = new AbstractListModel<FriendList>() {
+			@Override
+			public int getSize() {
+				return friends.size();
+			}
+			@Override
+			public FriendList getElementAt(int index) {
+				return friends.get(index);
+			}
+		};
+		friendList.setModel(model);
+		friendList.repaint();// 重新渲染
+	}
+	public void paintGroupList (List<GroupList> groupLists){
+		groups = groupLists;
+		ListModel<GroupList> model = new AbstractListModel<GroupList>() {
+			@Override
+			public int getSize() {
+				return groups.size();
+			}
+
+			@Override
+			public GroupList getElementAt(int index) {
+				return  groups.get(index);
+			}
+		};
+		groupList.setModel(model);
+		groupList.repaint();// 重新渲染
+	}
+	private static void setTaskbarIcon(JFrame frame) {
+		if (SystemTray.isSupported()) {
+			SystemTray tray = SystemTray.getSystemTray();
+			Image image = Toolkit.getDefaultToolkit().getImage("F:\\ikun.png"); // 任务栏图标的图片文件路径
+			// 创建任务栏图标
+			TrayIcon trayIcon = new TrayIcon(image, "即时聊天");
+			trayIcon.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					frame.setVisible(true); // 单击任务栏图标时，显示主窗口
+					frame.setExtendedState(JFrame.NORMAL);
+				}
+			});
+
+			trayIcon.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if (e.getButton() == MouseEvent.BUTTON3) {
+						// 右键点击时显示退出菜单项
+						PopupMenu popupMenu = new PopupMenu();
+						MenuItem exitItem = new MenuItem("Exit");
+						exitItem.addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								// 退出应用程序
+								System.exit(0);
+							}
+						});
+						popupMenu.add(exitItem);
+						trayIcon.setPopupMenu(popupMenu);
+					}
+				}
+			});
+
+			try {
+				tray.add(trayIcon);
+			} catch (AWTException e) {
+				System.err.println("Could not add tray icon");
+			}
+		} else {
+			System.err.println("SystemTray is not supported");
+		}
+	}
 }
 

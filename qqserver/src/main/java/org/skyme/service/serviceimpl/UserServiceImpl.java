@@ -9,12 +9,18 @@ import org.skyme.dao.daoimpl.QQRelationDaoImpl;
 import org.skyme.dao.daoimpl.UserDaoImpl;
 import org.skyme.dto.AddFriend;
 import org.skyme.core.MessageType;
+import org.skyme.dto.ChangePassWord;
+import org.skyme.dto.CodeDto;
+import org.skyme.dto.Forget;
 import org.skyme.entity.QQRelation;
 import org.skyme.entity.User;
 import org.skyme.dao.jdbc.SqlUtil;
 import org.skyme.dao.jdbc.TimeUtil;
 import org.skyme.service.UserService;
+import org.skyme.util.CodeGenerator;
+import org.skyme.util.EmailUtil;
 import org.skyme.util.MD5Util;
+import org.skyme.util.PassWordGenerator;
 import org.skyme.vo.BaseResponse;
 import org.skyme.vo.FriendList;
 
@@ -346,4 +352,92 @@ public class UserServiceImpl implements UserService {
         return new BaseResponse();
     }
 
+    @Override
+    public BaseResponse forgetPassword(Forget data) {
+        //首先去数据库进行数据匹配,判断是否合理,然后再去发送信息
+        List<User> select = SqlUtil.select(User.class, "select * from qq_user where username=? and email=?", data.getUsername(),data.getEmail());
+        Message message = new Message();
+        message.setCode(1);
+        message.setType(MessageType.FORGET_PASSWORD_RESULT);
+
+        if(select == null || select.size()==0){
+            message.setMes("重置失败");
+        }else{
+            String password = PassWordGenerator.generatePassword();
+            EmailUtil.sendEmail(data.getEmail(),"密码重置","重置密码为:"+password+"请妥善保管");
+            String md5Str=null;
+            try {
+               md5Str =  MD5Util.getMD5Str(password);
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            select.get(0).setPassword(md5Str);
+            SqlUtil.update(select.get(0));
+            message.setMes("重置成功");
+        }
+
+        return new BaseResponse(message);
+    }
+
+    @Override
+    public BaseResponse changePassword(ChangePassWord data, Response response) {
+        //查询数据库信息
+        String passWord = data.getPassWord();
+        String md5Str=null;
+        try {
+            md5Str = MD5Util.getMD5Str(passWord);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        Message message = new Message();
+        List<User> select = SqlUtil.select(User.class, "select * from qq_user where username=? and password=?", data.getUserName(), md5Str);
+        if(select == null || select.isEmpty()){
+            message.setData(null);
+            message.setCode(0);
+            message.setMes("修改失败");
+            System.out.println("修改失败");
+        }else{
+            User user = select.get(0);
+            String md5Str1 = null;
+            try {
+                md5Str1 = MD5Util.getMD5Str(data.getNewPassWord());
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+            user.setPassword(md5Str1);
+            int update = SqlUtil.update(user);
+            if(update>0){
+                System.out.println("修改成功");
+                message.setMes("修改成功");
+                message.setType(MessageType.CHANGE_PASSOWRD_RESULT);
+                message.setCode(1);
+                message.setData(null);
+            }else {
+                message.setMes("修改失败");
+                System.out.println("修改失败");
+            }
+        }
+        return new BaseResponse(message);
+    }
+
+    @Override
+    public BaseResponse code(CodeDto data, Response response) {
+        String code = CodeGenerator.generateNumber(6);
+        List<User> select = SqlUtil.select(User.class, "select email from qq_user where username=?", data.getUsername());
+        Message<String> codeResult = new Message<>();
+        if(select == null || select.isEmpty()){
+            //没有这个号
+            codeResult.setCode(0);
+        }else{
+            User user = select.get(0);
+            String email = user.getEmail();
+            EmailUtil.sendEmail(email,"NewBee登录验证码","请使用当前验证码:"+code+"   进行登录");
+            codeResult.setCode(1);
+        }
+
+        codeResult.setType(MessageType.CODE_RESULT);
+        codeResult.setMes("验证码生成");
+        codeResult.setData(code);
+        return new BaseResponse(codeResult);
+    }
 }

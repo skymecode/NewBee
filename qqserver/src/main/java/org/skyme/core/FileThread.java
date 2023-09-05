@@ -2,10 +2,12 @@ package org.skyme.core;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Properties;
 
 public class FileThread implements Runnable{
 
     private Socket socket;
+    private Properties properties ;
 
     public FileThread(Socket socket) {
         this.socket = socket;
@@ -13,6 +15,15 @@ public class FileThread implements Runnable{
 
     @Override
     public void run() {
+        InputStream in = Server.class.getClassLoader().getResourceAsStream("server.properties");
+//
+        try{
+            properties=new Properties();
+            properties.load(in);
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String filePath = properties.getProperty("filePath");
         InputStream inputStream = null;
         DataInputStream dataInputStream = null;
         OutputStream outputStream = null;
@@ -25,16 +36,16 @@ public class FileThread implements Runnable{
             //将文件写给用户
             if("download".equals(type)){
                 String s = dataInputStream.readUTF();
-                File f=new File("/home/files");
+                File f=new File(filePath);
                 if(!f.exists()){
                     boolean mkdirs = f.mkdirs();//创建目录
                 }
-                File file = new File("/home/files",s);
+                File file = new File(filePath,s);
                 System.out.println("文件下载地址"+file);
                 if(!file.exists()){
                     System.out.println("文件目录不存在");
                     //如果不存在则给个图片
-                    file = new File("/home/files","default.png");
+                    file = new File(filePath,"default.png");
                 }
                 outputStream = socket.getOutputStream();
                 dataOutputStream = new DataOutputStream(outputStream);
@@ -55,14 +66,11 @@ public class FileThread implements Runnable{
 
                 DataInputStream dis = new DataInputStream(socket.getInputStream());
                 String fileName = dis.readUTF();
-
                 //找到对应的文件
-
-                File file = new File("/home/files",fileName);
+                File file = new File(filePath,fileName);
                 if(!file.exists()){
-                    file = new File("/home/files",fileName);
+                    file = new File("filePath",fileName);
                 }
-
                 //读取文件的长度
                 long fileSize = dis.readLong();
                 // 创建本地文件，并写入接收到的数据

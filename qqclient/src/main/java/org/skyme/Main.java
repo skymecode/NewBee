@@ -29,14 +29,11 @@ public class Main {
 	private static  Login login;
 	private static SocketChannel socket;
 	public static void main(String[] args) {
-
 		EventQueue.invokeLater(new Runnable() {
-
-
 			@Override
 			public void run() {
 				try {
-					UIManager.setLookAndFeel(new FlatMacDarkLaf());
+					UIManager.setLookAndFeel(new FlatMacLightLaf());
 				} catch (UnsupportedLookAndFeelException e) {
 					throw new RuntimeException(e);
 				}
